@@ -64,6 +64,10 @@ apply_once \
     "$PATCH_ROOT/patches/system/core/init-user-permissive-selinux.patch"
 
 apply_once \
+    "hardware/interfaces" \
+    "$PATCH_ROOT/patches/hardware/interfaces/legacy-private-sensor-type-compat.patch"
+
+apply_once \
     "frameworks/base" \
     "$PATCH_ROOT/patches/frameworks/base/packageinstaller-webview-compat.patch"
 
