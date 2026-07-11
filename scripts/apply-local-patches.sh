@@ -39,6 +39,27 @@ require_kirin930_hwbitmap() {
         "kirin930-dev Hardware bitmaps support workaround"
 }
 
+require_kirin930_surfaceflinger_lcd_wake() {
+    local patch="$ANDROID_TOP/device/huawei/mozart/patches/mozart/frameworks/native/Surfaceflinger-wake-up-the-LCD-manually.patch"
+    local local_patch="$PATCH_ROOT/patches/frameworks/native/surfaceflinger-powerdown-lcd-on-off.patch"
+
+    if git -C "$ANDROID_TOP/frameworks/native" apply -R --check "$local_patch" >/dev/null 2>&1; then
+        echo "ok: local patch already applied: SurfaceFlinger LCD powerdown workaround"
+        return
+    fi
+
+    if [[ ! -f "$patch" ]]; then
+        echo "error: missing kirin930-dev SurfaceFlinger LCD wake patch in device tree" >&2
+        echo "expected: ${patch#$ANDROID_TOP/}" >&2
+        exit 3
+    fi
+
+    require_patch_file_applied \
+        "frameworks/native" \
+        "$patch" \
+        "kirin930-dev SurfaceFlinger LCD wake workaround"
+}
+
 apply_once() {
     local repo="$1"
     local patch="$2"
@@ -54,6 +75,7 @@ apply_once() {
 }
 
 require_kirin930_hwbitmap
+require_kirin930_surfaceflinger_lcd_wake
 
 apply_once \
     "device/huawei/mozart" \
@@ -105,5 +127,9 @@ apply_once \
 apply_once \
     "frameworks/base" \
     "$PATCH_ROOT/patches/frameworks/base/packageinstaller-webview-compat.patch"
+
+apply_once \
+    "frameworks/native" \
+    "$PATCH_ROOT/patches/frameworks/native/surfaceflinger-powerdown-lcd-on-off.patch"
 
 echo "local mozart patches are applied"
