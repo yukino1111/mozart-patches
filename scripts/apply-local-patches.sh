@@ -77,10 +77,12 @@ apply_once() {
 require_kirin930_hwbitmap
 require_kirin930_surfaceflinger_lcd_wake
 
+# Device identity and bring-up defaults.
 apply_once \
     "device/huawei/mozart" \
     "$PATCH_ROOT/patches/device/huawei/mozart/release-user-source-boot-webview.patch"
 
+# EMUI 3.1 GPU and IMG MSVDX codec recovery.
 apply_once \
     "device/huawei/mozart" \
     "$PATCH_ROOT/patches/device/huawei/mozart/restore-graphics-hal-properties.patch"
@@ -101,13 +103,15 @@ apply_once \
     "vendor/huawei/mozart" \
     "$PATCH_ROOT/patches/vendor/huawei/mozart/restore-emui31-gpu-omx-vendor-paths.patch"
 
-if [[ -d "$PATCH_ROOT/proprietary-blobs/huawei/mozart" ]]; then
+BLOB_CACHE="$PATCH_ROOT/proprietary-blobs/huawei/mozart"
+if [[ -d "$BLOB_CACHE" ]] && [[ -n "$(find "$BLOB_CACHE" -type f -print -quit)" ]]; then
     "$PATCH_ROOT/scripts/extract-proprietary-blobs.sh" "$ANDROID_TOP"
 else
     echo "note: proprietary blob cache is absent"
     echo "      run scripts/extract-proprietary-blobs.sh with a stock /system extraction before building"
 fi
 
+# Core boot image and SELinux compatibility.
 apply_once \
     "system/core" \
     "$PATCH_ROOT/patches/system/core/init-user-permissive-selinux.patch"
@@ -116,6 +120,7 @@ apply_once \
     "system/core" \
     "$PATCH_ROOT/patches/system/core/mkbootimg-uint32-tags-offset.patch"
 
+# Framework/HAL compatibility shims.
 apply_once \
     "hardware/interfaces" \
     "$PATCH_ROOT/patches/hardware/interfaces/legacy-private-sensor-type-compat.patch"
@@ -129,7 +134,16 @@ apply_once \
     "$PATCH_ROOT/patches/frameworks/base/packageinstaller-webview-compat.patch"
 
 apply_once \
+    "frameworks/av" \
+    "$PATCH_ROOT/patches/frameworks/av/img-msvdx-decoder-framerate-compat.patch"
+
+apply_once \
     "frameworks/native" \
     "$PATCH_ROOT/patches/frameworks/native/surfaceflinger-powerdown-lcd-on-off.patch"
+
+# Opt-in display composition experiment. Disabled at runtime by default.
+apply_once \
+    "hardware/interfaces" \
+    "$PATCH_ROOT/patches/hardware/interfaces/hwc2onfbadapter-hisi-dss-overlay-fallback.patch"
 
 echo "local mozart patches are applied"
