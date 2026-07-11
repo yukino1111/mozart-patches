@@ -60,12 +60,47 @@ apply_once \
     "$PATCH_ROOT/patches/device/huawei/mozart/release-user-source-boot-webview.patch"
 
 apply_once \
+    "device/huawei/mozart" \
+    "$PATCH_ROOT/patches/device/huawei/mozart/restore-graphics-hal-properties.patch"
+
+apply_once \
+    "device/huawei/mozart" \
+    "$PATCH_ROOT/patches/device/huawei/mozart/restore-img-omx-media-codecs.patch"
+
+apply_once \
+    "device/huawei/mozart" \
+    "$PATCH_ROOT/patches/device/huawei/mozart/restore-huawei-media-flags.patch"
+
+apply_once \
+    "device/huawei/mozart" \
+    "$PATCH_ROOT/patches/device/huawei/mozart/label-gpu-vdec-device-nodes.patch"
+
+apply_once \
+    "vendor/huawei/mozart" \
+    "$PATCH_ROOT/patches/vendor/huawei/mozart/restore-emui31-gpu-omx-vendor-paths.patch"
+
+if [[ -d "$PATCH_ROOT/proprietary-blobs/huawei/mozart" ]]; then
+    "$PATCH_ROOT/scripts/extract-proprietary-blobs.sh" "$ANDROID_TOP"
+else
+    echo "note: proprietary blob cache is absent"
+    echo "      run scripts/extract-proprietary-blobs.sh with a stock /system extraction before building"
+fi
+
+apply_once \
     "system/core" \
     "$PATCH_ROOT/patches/system/core/init-user-permissive-selinux.patch"
 
 apply_once \
+    "system/core" \
+    "$PATCH_ROOT/patches/system/core/mkbootimg-uint32-tags-offset.patch"
+
+apply_once \
     "hardware/interfaces" \
     "$PATCH_ROOT/patches/hardware/interfaces/legacy-private-sensor-type-compat.patch"
+
+apply_once \
+    "hardware/interfaces" \
+    "$PATCH_ROOT/patches/hardware/interfaces/audio-null-master-volume-compat.patch"
 
 apply_once \
     "frameworks/base" \
