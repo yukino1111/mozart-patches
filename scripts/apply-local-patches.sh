@@ -154,6 +154,10 @@ apply_once \
     "$PATCH_ROOT/patches/frameworks/base/packageinstaller-webview-compat.patch"
 
 apply_once \
+    "frameworks/base" \
+    "$PATCH_ROOT/patches/frameworks/base/gnss-geofence-native-timeout.patch"
+
+apply_once \
     "frameworks/av" \
     "$PATCH_ROOT/patches/frameworks/av/img-msvdx-decoder-framerate-compat.patch"
 
