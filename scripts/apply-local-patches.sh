@@ -24,23 +24,22 @@ require_patch_file_applied() {
     exit 3
 }
 
-require_kirin930_hwbitmap() {
-    local patch="$ANDROID_TOP/device/huawei/mozart/patches/mozart/frameworks/base/Hardware-bitmaps-support-workaround.patch"
+require_kirin930_patch() {
+    local repo="$1"
+    local patch_rel="$2"
+    local label="$3"
+    local patch="$ANDROID_TOP/device/huawei/mozart/patches/mozart/$patch_rel"
 
     if [[ ! -f "$patch" ]]; then
-        echo "error: missing kirin930-dev hardware bitmap patch in device tree" >&2
+        echo "error: missing kirin930-dev patch in device tree: $label" >&2
         echo "expected: ${patch#$ANDROID_TOP/}" >&2
         exit 3
     fi
 
-    require_patch_file_applied \
-        "frameworks/base" \
-        "$patch" \
-        "kirin930-dev Hardware bitmaps support workaround"
+    require_patch_file_applied "$repo" "$patch" "$label"
 }
 
 require_kirin930_surfaceflinger_lcd_wake() {
-    local patch="$ANDROID_TOP/device/huawei/mozart/patches/mozart/frameworks/native/Surfaceflinger-wake-up-the-LCD-manually.patch"
     local local_patch="$PATCH_ROOT/patches/frameworks/native/surfaceflinger-powerdown-lcd-on-off.patch"
 
     if git -C "$ANDROID_TOP/frameworks/native" apply -R --check "$local_patch" >/dev/null 2>&1; then
@@ -48,16 +47,49 @@ require_kirin930_surfaceflinger_lcd_wake() {
         return
     fi
 
-    if [[ ! -f "$patch" ]]; then
-        echo "error: missing kirin930-dev SurfaceFlinger LCD wake patch in device tree" >&2
-        echo "expected: ${patch#$ANDROID_TOP/}" >&2
-        exit 3
-    fi
-
-    require_patch_file_applied \
+    require_kirin930_patch \
         "frameworks/native" \
-        "$patch" \
+        "frameworks/native/Surfaceflinger-wake-up-the-LCD-manually.patch" \
         "kirin930-dev SurfaceFlinger LCD wake workaround"
+}
+
+require_kirin930_patches() {
+    require_kirin930_patch \
+        "build/make" \
+        "build/make/Do-not-check-device-assert-signature.patch" \
+        "kirin930-dev device assert signature workaround"
+
+    require_kirin930_patch \
+        "frameworks/base" \
+        "frameworks/base/Hardware-bitmaps-support-workaround.patch" \
+        "kirin930-dev hardware bitmap workaround"
+
+    require_kirin930_surfaceflinger_lcd_wake
+
+    require_kirin930_patch \
+        "hardware/broadcom/wlan" \
+        "hardware/broadcom/wlan/WifiHAL-Do-not-error-check-on-initialization.patch" \
+        "kirin930-dev Broadcom Wi-Fi HAL initialization workaround"
+
+    require_kirin930_patch \
+        "hardware/interfaces" \
+        "hardware/interfaces/Audio-skip-setMasterVolume-if-not-implement.patch" \
+        "kirin930-dev audio master volume workaround"
+
+    require_kirin930_patch \
+        "lineage-sdk" \
+        "lineage-sdk/Hardcode-Vendor-Security-Patchlevel.patch" \
+        "kirin930-dev vendor security patch level workaround"
+
+    require_kirin930_patch \
+        "system/bt" \
+        "system/bt/Hci-dont-crash-if-some-checks-fail.patch" \
+        "kirin930-dev Bluetooth HCI parser workaround"
+
+    require_kirin930_patch \
+        "system/core" \
+        "system/core/Support-mkbootimg-0xffb88000-as-tags-offset.patch" \
+        "kirin930-dev mkbootimg tags offset workaround"
 }
 
 apply_once() {
@@ -74,31 +106,27 @@ apply_once() {
     git -C "$ANDROID_TOP/$repo" apply "$patch"
 }
 
-require_kirin930_hwbitmap
-require_kirin930_surfaceflinger_lcd_wake
+require_kirin930_patches
 
-# Device identity and bring-up defaults.
+# Release and OTA tooling.
+apply_once \
+    "build/make" \
+    "$PATCH_ROOT/patches/build/make/mozart-release-ota-build-tools.patch"
+
+# Device identity, media, source boot and SELinux compatibility.
 apply_once \
     "device/huawei/mozart" \
-    "$PATCH_ROOT/patches/device/huawei/mozart/release-user-source-boot-webview.patch"
+    "$PATCH_ROOT/patches/device/huawei/mozart/mozart-device-bringup-media-selinux.patch"
+
+apply_once \
+    "kernel/huawei/mozart" \
+    "$PATCH_ROOT/patches/kernel/huawei/mozart/disable-debug-info.patch"
+
+apply_once \
+    "vendor/lineage" \
+    "$PATCH_ROOT/patches/vendor/lineage/disable-backuptool-and-hudson-fetch.patch"
 
 # EMUI 3.1 GPU and IMG MSVDX codec recovery.
-apply_once \
-    "device/huawei/mozart" \
-    "$PATCH_ROOT/patches/device/huawei/mozart/restore-graphics-hal-properties.patch"
-
-apply_once \
-    "device/huawei/mozart" \
-    "$PATCH_ROOT/patches/device/huawei/mozart/restore-img-omx-media-codecs.patch"
-
-apply_once \
-    "device/huawei/mozart" \
-    "$PATCH_ROOT/patches/device/huawei/mozart/restore-huawei-media-flags.patch"
-
-apply_once \
-    "device/huawei/mozart" \
-    "$PATCH_ROOT/patches/device/huawei/mozart/label-gpu-vdec-device-nodes.patch"
-
 apply_once \
     "vendor/huawei/mozart" \
     "$PATCH_ROOT/patches/vendor/huawei/mozart/restore-emui31-gpu-omx-vendor-paths.patch"
@@ -116,18 +144,10 @@ apply_once \
     "system/core" \
     "$PATCH_ROOT/patches/system/core/init-user-permissive-selinux.patch"
 
-apply_once \
-    "system/core" \
-    "$PATCH_ROOT/patches/system/core/mkbootimg-uint32-tags-offset.patch"
-
 # Framework/HAL compatibility shims.
 apply_once \
     "hardware/interfaces" \
     "$PATCH_ROOT/patches/hardware/interfaces/legacy-private-sensor-type-compat.patch"
-
-apply_once \
-    "hardware/interfaces" \
-    "$PATCH_ROOT/patches/hardware/interfaces/audio-null-master-volume-compat.patch"
 
 apply_once \
     "frameworks/base" \

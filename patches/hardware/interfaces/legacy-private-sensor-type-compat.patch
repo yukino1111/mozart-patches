@@ -46,3 +46,8 @@ index a5747d4..f6cce88 100644
          .timestamp = src.timestamp
      };
  
+@@ -405,4 +426,3 @@ int convertFromRateLevel(RateLevel rate) {
+ }  // namespace sensors
+ }  // namespace hardware
+ }  // namespace android
+-

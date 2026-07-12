@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <remote name="kirin930" fetch="https://github.com/kirin930-dev" />
+  <project path="device/huawei/mozart" name="android_device_huawei_mozart" remote="kirin930" revision="lineage-16.0" clone-depth="1" />
+  <project path="vendor/huawei/mozart" name="android_vendor_huawei_mozart" remote="kirin930" revision="lineage-16.0" clone-depth="1" />
+  <project path="kernel/huawei/mozart" name="android_kernel_huawei_mozart" remote="kirin930" revision="lineage-16.0" clone-depth="1" />
+</manifest>

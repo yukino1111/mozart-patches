@@ -1,0 +1,806 @@
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index d93781e..65f1478 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -82,7 +82,6 @@ BOARD_KERNEL_CMDLINE := \
+     mem=3072M \
+     coherent_pool=512K \
+     mmcparts=mmcblk0:p1(vrl),p2(vrl_backup),p6(modemnvm_factory),p9(splash),p10(modemnvm_backup),p11(modemnvm_img),p12(modemnvm_system),p14(3rdmodemnvm),p15(3rdmodemnvmback),p17(modem_om),p20(modemnvm_update),p30(modem),p31(modem_dsp),p32(dfx),p33(3rdmodem) \
+-    androidboot.selinux=permissive \
+     ate_enable=true
+ 
+ BOARD_MKBOOTIMG_ARGS := \
+@@ -93,6 +92,18 @@ BOARD_MKBOOTIMG_ARGS := \
+ BOARD_KERNEL_IMAGE_NAME := Image
+ TARGET_KERNEL_SOURCE := kernel/huawei/mozart
+ TARGET_KERNEL_CONFIG := lineage_mozart_defconfig
++MOZART_KERNEL_BUILD_EPOCH := $(MOZART_KERNEL_BUILD_DATETIME)
++ifeq ($(strip $(MOZART_KERNEL_BUILD_EPOCH)),)
++MOZART_KERNEL_BUILD_EPOCH := $(MOZART_BUILD_DATETIME)
++endif
++ifeq ($(strip $(MOZART_KERNEL_BUILD_EPOCH)),)
++MOZART_KERNEL_BUILD_EPOCH := $(shell if [ -f "$(OUT_DIR)/build_date.txt" ]; then cat "$(OUT_DIR)/build_date.txt"; fi)
++endif
++MOZART_KERNEL_BUILD_TIMESTAMP := $(shell if [ -n "$(MOZART_KERNEL_BUILD_EPOCH)" ]; then date -u -d @"$(MOZART_KERNEL_BUILD_EPOCH)"; else date -u; fi)
++TARGET_KERNEL_ADDITIONAL_FLAGS += \
++    KBUILD_BUILD_USER=android \
++    KBUILD_BUILD_HOST=android-build \
++    KBUILD_BUILD_TIMESTAMP="$(MOZART_KERNEL_BUILD_TIMESTAMP)"
+ 
+ # Malloc
+ MALLOC_SVELTE := true
+@@ -114,6 +125,8 @@ TARGET_SYSTEM_PROP := $(DEVICE_PATH)/configs/props/system.prop
+ 
+ # Recovery
+ TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/fstab.hi3635
++BOARD_SKIP_INSTALL_RECOVERY := true
++TARGET_DISABLE_LINEAGE_BACKUPTOOL := true
+ 
+ # Shims
+ TARGET_LD_SHIM_LIBS := \
+@@ -121,7 +134,9 @@ TARGET_LD_SHIM_LIBS := \
+     /system/vendor/lib64/sensorhub.hi3635.so|libshim_log.so
+ 
+ # SELinux
++BOARD_PLAT_PUBLIC_SEPOLICY_DIR += $(DEVICE_PATH)/sepolicy/public
+ BOARD_PLAT_PRIVATE_SEPOLICY_DIR += $(DEVICE_PATH)/sepolicy
++BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
+ 
+ # Vintf
+ DEVICE_MANIFEST_FILE := $(DEVICE_PATH)/vintf/manifest.xml
+diff --git a/configs/media/media_codecs.xml b/configs/media/media_codecs.xml
+index 1499341..6b5935d 100644
+--- a/configs/media/media_codecs.xml
++++ b/configs/media/media_codecs.xml
+@@ -81,75 +81,65 @@ Only the three quirks included above are recognized at this point:
+     <Include href="media_codecs_google_telephony.xml" />
+ 
+     <Decoders>
+-        <MediaCodec name="OMX.k3.video.decoder.avc" type="video/avc">
+-            <Limit name="size" min="64x64" max="1920x1088" />
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.AVC" type="video/avc">
++            <Quirk name="needs-flush-on-all-ports" />
+             <Quirk name="requires-allocate-on-input-ports" />
+-            <Limit name="concurrent-instances" max="4" />
++            <Limit name="size" min="96x16" max="2560x1600" />
++            <Limit name="concurrent-instances" max="16" />
+             <Feature name="adaptive-playback" />
+         </MediaCodec>
+-        <MediaCodec name="OMX.k3.video.decoder.mpeg2" >
+-            <Type name="video/mpeg"  >
+-                <Limit name="size" min="64x64" max="1920x1088" />
+-                <Limit name="concurrent-instances" max="4" />
+-            </Type>
+-            <Type name="video/mpeg2"  >
+-                <Limit name="size" min="64x64" max="1920x1088" />
+-                <Limit name="concurrent-instances" max="4" />
+-            </Type>
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.REAL" type="video/x-pn-realvideo">
++            <Quirk name="needs-flush-on-all-ports" />
+             <Quirk name="requires-allocate-on-input-ports" />
+-            <Limit name="size" min="64x64" max="1920x1088" />
++            <Limit name="size" min="96x16" max="1920x1088" />
++            <Limit name="concurrent-instances" max="16" />
+             <Feature name="adaptive-playback" />
+         </MediaCodec>
+-        <MediaCodec name="OMX.k3.video.decoder.mpeg4" >
+-            <Type name="video/mpeg4" >
+-                <Limit name="size" min="64x64" max="1920x1088" />
+-                <Limit name="concurrent-instances" max="4" />
+-            </Type>
+-            <Type name="video/mp4v-es"  >
+-                <Limit name="size" min="64x64" max="1920x1088" />
+-                <Limit name="concurrent-instances" max="4" />
+-            </Type>
+-            <Type name="video/mp4"  >
+-                <Limit name="size" min="64x64" max="1920x1088" />
+-                <Limit name="concurrent-instances" max="4" />
+-            </Type>
+-            <Type name="video/x-flv" >
+-                <Limit name="size" min="64x64" max="1920x1088" />
+-                <Limit name="concurrent-instances" max="4" />
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.MPEG2">
++            <Quirk name="needs-flush-on-all-ports" />
++            <Quirk name="requires-allocate-on-input-ports" />
++            <Type name="video/mpeg2">
++                <Limit name="size" min="96x16" max="1920x1088" />
++                <Limit name="concurrent-instances" max="16" />
+             </Type>
+-            <Type name="video/3gpp" >
+-                <Limit name="size" min="64x64" max="1920x1088" />
+-                <Limit name="concurrent-instances" max="4" />
++            <Type name="video/mpeg">
++                <Limit name="size" min="96x16" max="1920x1088" />
++                <Limit name="concurrent-instances" max="16" />
+             </Type>
++        </MediaCodec>
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.MPEG4" type="video/mp4v-es">
++            <Quirk name="needs-flush-on-all-ports" />
+             <Quirk name="requires-allocate-on-input-ports" />
+-            <Limit name="concurrent-instances" max="4" />
++            <Limit name="size" min="96x16" max="1920x1088" />
++            <Limit name="concurrent-instances" max="16" />
+             <Feature name="adaptive-playback" />
+         </MediaCodec>
+-        <MediaCodec name="OMX.k3.video.decoder.vc1" >
+-            <Type name="video/x-ms-wmv"  >
+-                <Limit name="size" min="64x64" max="1920x1088" />
+-                <Limit name="concurrent-instances" max="4" />
+-            </Type>
+-            <Type name="video/x-ms-wmv3"  >
+-                <Limit name="size" min="64x64" max="1920x1088" />
+-                <Limit name="concurrent-instances" max="4" />
+-            </Type>
+-            <Type name="video/vc1"  >
+-                <Limit name="size" min="64x64" max="1920x1088" />
+-                <Limit name="concurrent-instances" max="4" />
+-            </Type>
+-            <Type name="video/wvc1"  >
+-                <Limit name="size" min="64x64" max="1920x1088" />
+-                <Limit name="concurrent-instances" max="4" />
+-            </Type>
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.H263" type="video/3gpp">
++            <Quirk name="needs-flush-on-all-ports" />
+             <Quirk name="requires-allocate-on-input-ports" />
+-            <Limit name="size" min="64x64" max="1920x1088" />
++            <Limit name="size" min="96x16" max="1920x1088" />
++            <Limit name="concurrent-instances" max="16" />
+             <Feature name="adaptive-playback" />
+-        </MediaCodec>	
+-        <MediaCodec name="OMX.k3.video.decoder.rv" type="video/x-pn-realvideo">
++        </MediaCodec>
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.VC1" type="video/vc1">
++            <Quirk name="needs-flush-on-all-ports" />
++            <Quirk name="requires-allocate-on-input-ports" />
++            <Limit name="size" min="96x16" max="1920x1088" />
++            <Limit name="concurrent-instances" max="16" />
++            <Feature name="adaptive-playback" />
++        </MediaCodec>
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.VP8" type="video/x-vnd.on2.vp8">
++            <Quirk name="needs-flush-on-all-ports" />
++            <Quirk name="requires-allocate-on-input-ports" />
++            <Limit name="size" min="96x16" max="1920x1088" />
++            <Limit name="concurrent-instances" max="16" />
++            <Feature name="adaptive-playback" />
++        </MediaCodec>
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.SORENSON" type="video/x-flv">
++            <Quirk name="needs-flush-on-all-ports" />
+             <Quirk name="requires-allocate-on-input-ports" />
+-            <Limit name="size" min="64x64" max="1920x1088" />
+-            <Limit name="concurrent-instances" max="4" />
++            <Limit name="size" min="96x16" max="1920x1088" />
++            <Limit name="concurrent-instances" max="16" />
+             <Feature name="adaptive-playback" />
+         </MediaCodec>
+ 
+@@ -162,10 +152,22 @@ Only the three quirks included above are recognized at this point:
+     </Settings>
+ 
+     <Encoders>
+-        <MediaCodec name="OMX.k3.video.encoder.avc" type="video/avc">
+-        <Limit name="size" min="176x144" max="1920x1088" />
+-        <Limit name="alignment" value="16x16" />
+-        <Limit name="block-size" value="16x16" />
++        <MediaCodec name="OMX.IMG.TOPAZ.VIDEO.Encoder">
++            <Type name="video/3gpp">
++                <Limit name="size" min="128x128" max="2048x2048" />
++                <Limit name="bitrate" range="10-60000000" />
++                <Limit name="concurrent-instances" max="2" />
++            </Type>
++            <Type name="video/avc">
++                <Limit name="size" min="128x128" max="2048x2048" />
++                <Limit name="bitrate" range="10-60000000" />
++                <Limit name="concurrent-instances" max="2" />
++            </Type>
++            <Type name="video/mp4v-es">
++                <Limit name="size" min="128x128" max="2048x2048" />
++                <Limit name="bitrate" range="10-60000000" />
++                <Limit name="concurrent-instances" max="2" />
++            </Type>
+         </MediaCodec>
+     </Encoders>
+ </MediaCodecs>
+diff --git a/configs/media/media_codecs_performance.xml b/configs/media/media_codecs_performance.xml
+index 1408b03..5001759 100644
+--- a/configs/media/media_codecs_performance.xml
++++ b/configs/media/media_codecs_performance.xml
+@@ -15,11 +15,21 @@
+ -->
+ <MediaCodecs>
+     <Encoders>
+-        <MediaCodec name="OMX.k3.video.encoder.avc" update="true">
++        <MediaCodec name="OMX.IMG.TOPAZ.VIDEO.Encoder" update="true">
+             <Type name="video/avc">
+-                <Limit name="measured-frame-rate-320x240" range="357-357" />
+-                <Limit name="measured-frame-rate-720x480" range="118-118" />
+-                <Limit name="measured-frame-rate-1280x720" range="50-50" />
++                <Limit name="measured-frame-rate-320x240" range="477-477" />
++                <Limit name="measured-frame-rate-720x480" range="173-173" />
++                <Limit name="measured-frame-rate-1280x720" range="75-75" />
++                <Limit name="measured-frame-rate-1920x1080" range="37-37" />
++            </Type>
++            <Type name="video/mp4v-es">
++                <Limit name="measured-frame-rate-176x144" range="440-440" />
++                <Limit name="measured-frame-rate-352x288" range="331-331" />
++                <Limit name="measured-frame-rate-640x480" range="179-179" />
++            </Type>
++            <Type name="video/3gpp">
++                <Limit name="measured-frame-rate-176x144" range="403-403" />
++                <Limit name="measured-frame-rate-352x288" range="319-319" />
+             </Type>
+         </MediaCodec>
+         <MediaCodec name="OMX.google.h264.encoder" type="video/avc" update="true">
+@@ -42,20 +52,25 @@
+         </MediaCodec>
+     </Encoders>
+     <Decoders>
+-        <MediaCodec name="OMX.k3.video.decoder.avc" type="video/avc" update="true">
+-            <Limit name="measured-frame-rate-320x240" range="200-700" />
+-            <Limit name="measured-frame-rate-720x480" range="180-180" />
+-            <Limit name="measured-frame-rate-1280x720" range="120-120" />
+-            <Limit name="measured-frame-rate-1920x1088" range="65-65" />
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.AVC" type="video/avc" update="true">
++            <Limit name="measured-frame-rate-176x144" range="513-513" />
++            <Limit name="measured-frame-rate-320x240" range="1208-1208" />
++            <Limit name="measured-frame-rate-720x480" range="1178-1178" />
++            <Limit name="measured-frame-rate-1280x720" range="500-500" />
++            <Limit name="measured-frame-rate-1920x1088" range="260-260" />
+         </MediaCodec>
+-        <MediaCodec name="OMX.k3.video.decoder.mpeg4" update="true">
+-            <Type name="video/mp4v-es">
+-                <Limit name="measured-frame-rate-480x360" range="350-350" />
+-            </Type>
+-            <Type name="video/3gpp">
+-                <Limit name="measured-frame-rate-176x144" range="200-700" />
+-                <Limit name="measured-frame-rate-352x288" range="450-450" />
+-            </Type>
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.H263" type="video/3gpp" update="true">
++            <Limit name="measured-frame-rate-176x144" range="3000-3000" />
++            <Limit name="measured-frame-rate-352x288" range="3000-3000" />
++        </MediaCodec>
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.MPEG4" type="video/mp4v-es" update="true">
++            <Limit name="measured-frame-rate-480x360" range="426-426" />
++        </MediaCodec>
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.VP8" type="video/x-vnd.on2.vp8" update="true">
++            <Limit name="measured-frame-rate-320x180" range="634-634" />
++            <Limit name="measured-frame-rate-640x360" range="601-601" />
++            <Limit name="measured-frame-rate-1280x720" range="567-567" />
++            <Limit name="measured-frame-rate-1920x1080" range="319-319" />
+         </MediaCodec>
+         <MediaCodec name="OMX.google.h264.decoder" type="video/avc" update="true">
+             <Limit name="measured-frame-rate-320x240" range="823-1200" />
+@@ -89,4 +104,3 @@
+         </MediaCodec>
+     </Decoders>
+ </MediaCodecs>
+-
+diff --git a/configs/props/system.prop b/configs/props/system.prop
+index a67687d..2379d67 100644
+--- a/configs/props/system.prop
++++ b/configs/props/system.prop
+@@ -19,6 +19,10 @@ dalvik.vm.heapmaxfree=8m
+ ro.sf.lcd_density=320
+ ro.opengles.version=196608
+ ro.config.mmu_en=1
++ro.hardware.egl=mali
++ro.hardware.gralloc=hi3635
++ro.hardware.copybit=hi3635
++ro.hardware.memtrack=hi3635
+ 
+ # HWUI
+ ro.hwui.texture_cache_size=72
+@@ -41,6 +45,7 @@ debug.hwui.skip_empty_damage=false
+ 
+ # Media
+ media.stagefright.use-awesome=false
++ro.config.hw_media_flags=3
+ 
+ # Performance
+ ro.am.reschedule_service=true
+diff --git a/device.mk b/device.mk
+index d3b3355..05821c5 100644
+--- a/device.mk
++++ b/device.mk
+@@ -6,6 +6,9 @@
+ 
+ DEVICE_PATH := device/huawei/mozart
+ 
++# Keep stock-style detection checks from finding Lineage addon/recovery helpers.
++TARGET_DISABLE_LINEAGE_BACKUPTOOL := true
++
+ # AAPT
+ PRODUCT_AAPT_CONFIG := normal
+ PRODUCT_AAPT_PREF_CONFIG := xxhdpi
+@@ -41,6 +44,10 @@ PRODUCT_PACKAGES += \
+ PRODUCT_PROPERTY_OVERRIDES += \
+     ro.carrier=wifi-only
+ 
++# WebView multiprocess is stable with the trace_marker permission fix.
++PRODUCT_PROPERTY_OVERRIDES += \
++    ro.webview.multiprocess_default=true
++
+ # Configstore
+ PRODUCT_PACKAGES += \
+     android.hardware.configstore@1.1-service
+diff --git a/libinit/Android.mk b/libinit/Android.mk
+index dc72bf1..38dfef4 100644
+--- a/libinit/Android.mk
++++ b/libinit/Android.mk
+@@ -13,6 +13,18 @@ LOCAL_SRC_FILES := init_huawei_hi3635.cpp
+ 
+ LOCAL_SHARED_LIBRARIES := libbase
+ 
++MOZART_LIBINIT_BUILD_EPOCH := $(strip $(MOZART_BUILD_DATETIME))
++ifeq ($(MOZART_LIBINIT_BUILD_EPOCH),)
++MOZART_LIBINIT_BUILD_EPOCH := $(strip $(BUILD_DATETIME))
++endif
++ifeq ($(MOZART_LIBINIT_BUILD_EPOCH),)
++MOZART_LIBINIT_BUILD_EPOCH := $(shell if [ -f "$(OUT_DIR)/build_date.txt" ]; then cat "$(OUT_DIR)/build_date.txt"; fi)
++endif
++MOZART_LIBINIT_BUILD_NUMBER := $(shell if [ -n "$(MOZART_LIBINIT_BUILD_EPOCH)" ]; then date -u -d @"$(MOZART_LIBINIT_BUILD_EPOCH)" +%Y%m%d; else date -u +%Y%m%d; fi)
++
++LOCAL_CFLAGS += \
++    -DMOZART_BUILD_NUMBER=\"$(MOZART_LIBINIT_BUILD_NUMBER)\"
++
+ LOCAL_C_INCLUDES := \
+     system/core/base/include \
+     system/core/init
+diff --git a/libinit/init_huawei_hi3635.cpp b/libinit/init_huawei_hi3635.cpp
+index 33a0e83..8c14d99 100644
+--- a/libinit/init_huawei_hi3635.cpp
++++ b/libinit/init_huawei_hi3635.cpp
+@@ -24,6 +24,15 @@
+ 
+ #define PRODUCT_NAME "sys/firmware/devicetree/base/hisi,boardname"
+ 
++#ifndef MOZART_BUILD_NUMBER
++#define MOZART_BUILD_NUMBER "00000000"
++#endif
++
++#define MOZART_BUILD_FINGERPRINT \
++    "huawei/mozart/hi3635:9/PQ3A.190801/" MOZART_BUILD_NUMBER ":user/release-keys"
++#define MOZART_BUILD_DESCRIPTION \
++    "lineage_mozart-user 9 PQ3A.190801.002 " MOZART_BUILD_NUMBER " release-keys"
++
+ using android::base::GetProperty;
+ using std::string;
+ 
+@@ -79,6 +88,6 @@ void vendor_load_properties() {
+         }
+     }
+ 
+-    set_ro_build_prop("fingerprint", "Huawei/MOZART/hi3635:6.0/MRA58K/huawei11291304:user/test-keys", false);
+-    set_ro_build_prop("description", "MOZART-user 6.0 MRA58K eng.huawei.20161129.130256 test-keys", false);
++    set_ro_build_prop("fingerprint", MOZART_BUILD_FINGERPRINT, false);
++    set_ro_build_prop("description", MOZART_BUILD_DESCRIPTION, false);
+ }
+diff --git a/lineage_mozart.mk b/lineage_mozart.mk
+index 2a280ac..8065d08 100644
+--- a/lineage_mozart.mk
++++ b/lineage_mozart.mk
+@@ -12,6 +12,9 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_m.mk)
+ # Inherit device configurations.
+ $(call inherit-product, $(LOCAL_PATH)/device.mk)
+ 
++# Keep stock-style detection checks from finding Lineage addon/recovery helpers.
++PRODUCT_DISABLE_LINEAGE_BACKUPTOOL := true
++
+ # Inherit some common LineageOS stuff.
+ $(call inherit-product, vendor/lineage/config/common_full_tablet_wifionly.mk)
+ 
+@@ -25,8 +28,17 @@ PRODUCT_MODEL := MediaPad M2 8.0
+ PRODUCT_CHARACTERISTICS := tablet
+ PRODUCT_GMS_CLIENTID_BASE := android-huawei
+ 
++MOZART_BUILD_ID ?= PQ3A.190801.002
++MOZART_FINGERPRINT_ID ?= PQ3A.190801
++MOZART_BUILD_EPOCH ?= $(MOZART_BUILD_DATETIME)
++MOZART_BUILD_NUMBER ?= $(shell if [ -n "$(MOZART_BUILD_EPOCH)" ]; then date -u -d @"$(MOZART_BUILD_EPOCH)" +%Y%m%d; else date -u +%Y%m%d; fi)
++MOZART_BUILD_DESC := lineage_mozart-user 9 $(MOZART_BUILD_ID) $(MOZART_BUILD_NUMBER) release-keys
++
+ PRODUCT_BUILD_PROP_OVERRIDES += \
+-    PRIVATE_BUILD_DESC="MOZART-user 6.0 MRA58K eng.huawei.20161129.130256 test-keys" \
++    BUILD_DISPLAY_ID="$(MOZART_BUILD_DESC)" \
++    BUILD_ID=$(MOZART_BUILD_ID) \
++    BUILD_NUMBER=$(MOZART_BUILD_NUMBER) \
++    PRIVATE_BUILD_DESC="$(MOZART_BUILD_DESC)" \
+     TARGET_DEVICE=hi3635
+ 
+-BUILD_FINGERPRINT := Huawei/MOZART/hi3635:6.0/MRA58K/huawei11291304:user/test-keys
++BUILD_FINGERPRINT := huawei/mozart/hi3635:9/$(MOZART_FINGERPRINT_ID)/$(MOZART_BUILD_NUMBER):user/release-keys
+diff --git a/rootdir/etc/init.hi3635.rc b/rootdir/etc/init.hi3635.rc
+index 3e77360..7767fbb 100755
+--- a/rootdir/etc/init.hi3635.rc
++++ b/rootdir/etc/init.hi3635.rc
+@@ -355,6 +355,10 @@ on fs
+     chown radio radio sys/devices/platform/balong_power/state
+ 
+ on post-fs
++    # WebView child zygote keeps trace_marker open across fork.
++    chmod 0222 /sys/kernel/debug/tracing/trace_marker
++    chmod 0222 /sys/kernel/tracing/trace_marker
++
+     mkdir /splash2/sim 0775 root system
+     mkdir /splash2/sim/offlinelogs 0775 root system
+     write /splash2/sim/offlinelogs/balong_modem1_simoffline.txt  0
+@@ -577,6 +581,10 @@ on boot
+     write /sys/devices/platform/antennafpga.0/ice40bin_download_dir "start"
+     chown system system /sys/devices/platform/antennafpga.0/ice40bin_scan_fpga_table
+ 
++    # debugfs/tracing permissions can be reset during early boot.
++    chmod 0222 /sys/kernel/debug/tracing/trace_marker
++    chmod 0222 /sys/kernel/tracing/trace_marker
++
+     write /sys/kernel/debug/kmemleak scan=14400
+ 
+     chown system system /sys/class/leds/lcd_backlight0/brightness
+@@ -645,14 +653,39 @@ on boot
+     chown system system /sys/devices/platform/huawei_tp_color/tp_color_info
+     chown system system /sys/touchscreen/tp_capacitance_test_type
+     chown system system /sys/class/leds/red/brightness
++    chmod 664 /sys/class/leds/red/brightness
+     chown system system /sys/class/leds/red/delay_off
++    chmod 664 /sys/class/leds/red/delay_off
+     chown system system /sys/class/leds/red/delay_on
++    chmod 664 /sys/class/leds/red/delay_on
+     chown system system /sys/class/leds/green/brightness
++    chmod 664 /sys/class/leds/green/brightness
+     chown system system /sys/class/leds/green/delay_off
++    chmod 664 /sys/class/leds/green/delay_off
+     chown system system /sys/class/leds/green/delay_on
++    chmod 664 /sys/class/leds/green/delay_on
+     chown system system /sys/class/leds/blue/brightness
++    chmod 664 /sys/class/leds/blue/brightness
+     chown system system /sys/class/leds/blue/delay_off
++    chmod 664 /sys/class/leds/blue/delay_off
+     chown system system /sys/class/leds/blue/delay_on
++    chmod 664 /sys/class/leds/blue/delay_on
++    chown system system /sys/class/leds/amber/brightness
++    chmod 664 /sys/class/leds/amber/brightness
++    chown system system /sys/class/leds/amber/blink
++    chmod 664 /sys/class/leds/amber/blink
++    chown system system /sys/class/leds/red/device/blink
++    chmod 664 /sys/class/leds/red/device/blink
++    chown system system /sys/class/leds/red/device/grppwm
++    chmod 664 /sys/class/leds/red/device/grppwm
++    chown system system /sys/class/leds/red/device/grpfreq
++    chmod 664 /sys/class/leds/red/device/grpfreq
++    chown system system /sys/class/leds/button-backlight/brightness
++    chmod 664 /sys/class/leds/button-backlight/brightness
++    chown system system /sys/class/leds/keyboard-backlight/brightness
++    chmod 664 /sys/class/leds/keyboard-backlight/brightness
++    chown system system /sys/class/leds/jogball-backlight/brightness
++    chmod 664 /sys/class/leds/jogball-backlight/brightness
+     chown system system /sys/class/timed_output/vibrator/vibrator_dbc_test
+     chown system system /sys/class/timed_output/vibrator/vibrator_calib
+     chown system system /sys/class/timed_output/vibrator/vibrator_get_reg
+diff --git a/sepolicy/file_contexts b/sepolicy/file_contexts
+index 83ec164..f39ea4e 100644
+--- a/sepolicy/file_contexts
++++ b/sepolicy/file_contexts
+@@ -1,4 +1,48 @@
+-# File contexts
++# Device nodes
++/dev/oinv						u:object_r:mozart_oeminfo_device_dir:s0
++/dev/anc_hs						u:object_r:audio_device:s0
++/dev/ear_pa						u:object_r:audio_device:s0
++/dev/hifi_misc						u:object_r:audio_device:s0
++/dev/hi6402_hifi_misc					u:object_r:audio_device:s0
++/dev/hwbt						u:object_r:hci_attach_dev:s0
++/dev/hwlog_jank						u:object_r:mozart_hwlog_device:s0
++/dev/block/mmcblk0p13					u:object_r:mozart_fsck_block_device:s0
++/dev/block/mmcblk0p14					u:object_r:mozart_fsck_block_device:s0
++/dev/block/mmcblk0p15					u:object_r:mozart_fsck_block_device:s0
++/dev/block/mmcblk0p33					u:object_r:mozart_fsck_block_device:s0
++/dev/block/mmcblk0p34					u:object_r:cache_block_device:s0
++/dev/block/mmcblk0p35					u:object_r:mozart_hisitest_block_device:s0
++/dev/block/mmcblk0p36					u:object_r:mozart_hisitest_block_device:s0
++/dev/block/mmcblk0p37					u:object_r:mozart_hisitest_block_device:s0
++/dev/block/mmcblk0p38					u:object_r:system_block_device:s0
++/dev/block/mmcblk0p39					u:object_r:mozart_fsck_block_device:s0
++/dev/block/mmcblk0p40					u:object_r:userdata_block_device:s0
++/dev/imgsysbrg_vdec[0-9]*				u:object_r:video_device:s0
++/dev/jpu						u:object_r:video_device:s0
++/dev/mali0						u:object_r:gpu_device:s0
++/dev/maxim_smartpa_dev					u:object_r:audio_device:s0
++/dev/nve0						u:object_r:mozart_nve_device:s0
++/dev/sensorhub						u:object_r:sensors_device:s0
++/dev/speakerID						u:object_r:audio_device:s0
++/dev/tc_ns_client					u:object_r:tee_device:s0
++/dev/tfa9895						u:object_r:audio_device:s0
++/dev/ttyAMA4						u:object_r:hci_attach_dev:s0
++
++# Data files
++/mnvm2:0(/.*)?						u:object_r:modem_nv_file:s0
++/modem_log(/.*)?					u:object_r:modem_log_file:s0
++/splash2(/.*)?						u:object_r:splash2_data_file:s0
++/data/gps(/.*)?						u:object_r:mozart_gps_data_file:s0
++/data/light						u:object_r:mozart_sensors_data_file:s0
++
++# Executables
++/sbin/oeminfo_nvm_server				u:object_r:oeminfo_nvm_exec:s0
++/sbin/teecd						u:object_r:tee_exec:s0
+ /system/bin/glgps4752					u:object_r:gpsd_exec:s0
+ /system/bin/gpsdaemon					u:object_r:gpsdaemon_exec:s0
++/system/vendor/bin/mac_addr_normalization		u:object_r:mac_addr_normalization_exec:s0
+ /vendor/bin/mac_addr_normalization			u:object_r:mac_addr_normalization_exec:s0
++
++# Sockets
++/dev/socket/oeminfo_nvm					u:object_r:mozart_oeminfo_socket:s0
++/dev/socket/tee-multi-user				u:object_r:mozart_tee_socket:s0
+diff --git a/sepolicy/fsck.te b/sepolicy/fsck.te
+new file mode 100644
+index 0000000..c229a9a
+--- /dev/null
++++ b/sepolicy/fsck.te
+@@ -0,0 +1 @@
++allow fsck mozart_fsck_block_device:blk_file rw_file_perms;
+diff --git a/sepolicy/genfs_contexts b/sepolicy/genfs_contexts
+new file mode 100644
+index 0000000..042c5ac
+--- /dev/null
++++ b/sepolicy/genfs_contexts
+@@ -0,0 +1,42 @@
++# HiSilicon GPU memory accounting
++genfscon proc /gpu_memory u:object_r:mozart_proc_gpu_memory:s0
++genfscon debugfs /ion u:object_r:mozart_debugfs_ion:s0
++
++# Battery, lights, storage and performance sysfs nodes
++genfscon sysfs /devices/fff34000.pmic/battery.88/power_supply/Battery u:object_r:sysfs_batteryinfo:s0
++genfscon sysfs /devices/fff34000.pmic/battery.88/power_supply/Mains u:object_r:sysfs_batteryinfo:s0
++genfscon sysfs /devices/fff34000.pmic/battery.88/power_supply/USB u:object_r:sysfs_batteryinfo:s0
++genfscon sysfs /devices/fff34000.pmic/battery.88/power_supply/bq_bk_battery u:object_r:sysfs_batteryinfo:s0
++genfscon sysfs /devices/fff34000.hisi_led/leds u:object_r:sysfs_leds:s0
++genfscon sysfs /devices/platform/hisi_fb.524289/leds u:object_r:sysfs_leds:s0
++genfscon sysfs /devices/fdf0a000.i2c/i2c-1/1-0063/leds u:object_r:sysfs_leds:s0
++genfscon sysfs /devices/fdf0a000.i2c/i2c-1/1-0067/leds u:object_r:sysfs_leds:s0
++genfscon sysfs /devices/fdf0a000.i2c/i2c-1/1-0068/leds u:object_r:sysfs_leds:s0
++genfscon sysfs /devices/hi_mci.0/mmc_host/mmc0/mmc0:0001/block/mmcblk0/stat u:object_r:sysfs_disk_stat:s0
++genfscon sysfs /devices/hi_mci.0/mmc_host/mmc0/mmc0:0001/block/mmcblk0/queue u:object_r:mozart_sysfs_mmc_queue:s0
++genfscon sysfs /devices/virtual/bdi/179:0 u:object_r:mozart_sysfs_mmc_queue:s0
++genfscon sysfs /module/block2mtd/parameters/block2mtd u:object_r:mozart_sysfs_block2mtd:s0
++genfscon sysfs /devices/ddrfreq/devfreq/ddrfreq u:object_r:mozart_sysfs_devfreq:s0
++genfscon sysfs /class/devfreq/gpufreq u:object_r:mozart_sysfs_devfreq:s0
++genfscon sysfs /devices/e8600000.mali/devfreq/gpufreq u:object_r:mozart_sysfs_devfreq:s0
++genfscon sysfs /class/graphics/fb0/lcd_cabc_mode u:object_r:mozart_sysfs_fb:s0
++genfscon sysfs /class/graphics/fb0/lcd_starlight_mode u:object_r:mozart_sysfs_fb:s0
++genfscon sysfs /devices/platform/hisi_fb.524289/graphics/fb0/lcd_cabc_mode u:object_r:mozart_sysfs_fb:s0
++genfscon sysfs /devices/platform/hisi_fb.524289/graphics/fb0/lcd_starlight_mode u:object_r:mozart_sysfs_fb:s0
++genfscon sysfs /devices/virtual/graphics/fb0 u:object_r:mozart_sysfs_fb:s0
++genfscon sysfs /kernel/hmp u:object_r:mozart_sysfs_hmp:s0
++genfscon sysfs /kernel/set_hmp_thresholds u:object_r:mozart_sysfs_hmp:s0
++genfscon sysfs /kernel/mm/ksm u:object_r:mozart_sysfs_ksm:s0
++genfscon sysfs /kernel/perfhub u:object_r:mozart_sysfs_perfhub:s0
++
++# Connectivity and sensors
++genfscon proc /bluetooth/sleep u:object_r:proc_bluetooth_writable:s0
++genfscon sysfs /class/rfkill/rfkill0 u:object_r:sysfs_bluetooth_writable:s0
++genfscon sysfs /devices/bluetooth_power.35/rfkill/rfkill0 u:object_r:sysfs_bluetooth_writable:s0
++genfscon sysfs /module/bcmdhd/parameters/firmware_path u:object_r:sysfs_wlan_fwpath:s0
++genfscon sysfs /devices/platform/huawei_sensor u:object_r:mozart_sysfs_sensors:s0
++genfscon sysfs /class/sensors u:object_r:mozart_sysfs_sensors:s0
++
++# Audio board information
++genfscon sysfs /firmware/devicetree/base/hisi,boardname u:object_r:mozart_sysfs_boardinfo:s0
++genfscon sysfs /firmware/devicetree/base/audio_hw_config u:object_r:mozart_sysfs_audio_info:s0
+diff --git a/sepolicy/gpsd.te b/sepolicy/gpsd.te
+index 9aeb178..66bd7c2 100644
+--- a/sepolicy/gpsd.te
++++ b/sepolicy/gpsd.te
+@@ -4,3 +4,10 @@ type gpsd_exec, exec_type, file_type;
+ 
+ # Started by init
+ init_daemon_domain(gpsd)
++
++allow domain gpsd_exec:file getattr;
++
++allow gpsd self:netlink_kobject_uevent_socket create_socket_perms_no_ioctl;
++allow gpsd mozart_gps_data_file:dir r_dir_perms;
++allow gpsd mozart_gps_data_file:file r_file_perms;
++allow gpsd mozart_gps_data_file:fifo_file create_file_perms;
+diff --git a/sepolicy/gpsdaemon.te b/sepolicy/gpsdaemon.te
+index a07702d..9ef4644 100644
+--- a/sepolicy/gpsdaemon.te
++++ b/sepolicy/gpsdaemon.te
+@@ -4,3 +4,8 @@ type gpsdaemon_exec, exec_type, file_type;
+ 
+ # Started by init
+ init_daemon_domain(gpsdaemon)
++
++allow gpsdaemon mozart_gps_data_file:dir rw_dir_perms;
++allow gpsdaemon mozart_gps_data_file:file create_file_perms;
++allow gpsdaemon mozart_gps_data_file:fifo_file create_file_perms;
++allow gpsdaemon shell_exec:file rx_file_perms;
+diff --git a/sepolicy/init.te b/sepolicy/init.te
+new file mode 100644
+index 0000000..f43ecd7
+--- /dev/null
++++ b/sepolicy/init.te
+@@ -0,0 +1,24 @@
++# Legacy root symlink is created after the rootfs is tmpfs-backed on this device.
++allow init tmpfs:lnk_file create;
++
++allow init mozart_tee_socket:sock_file create_file_perms;
++
++allow init proc_filesystems:file getattr;
++allow init mozart_hisitest_block_device:blk_file setattr;
++allow init mozart_nve_device:chr_file getattr;
++allow init { modem_log_file modem_nv_file }:dir mounton;
++allow init modem_log_file:dir create_dir_perms;
++allow init splash2_data_file:dir { mounton create_dir_perms };
++allow init splash2_data_file:file create_file_perms;
++allow init mozart_sysfs_block2mtd:file w_file_perms;
++allow init mozart_sysfs_boardinfo:file r_file_perms;
++allow init mozart_sysfs_devfreq:file { rw_file_perms setattr };
++allow init mozart_sysfs_fb:file { rw_file_perms setattr };
++allow init mozart_sysfs_hmp:file { rw_file_perms setattr };
++allow init mozart_sysfs_ksm:file w_file_perms;
++allow init mozart_sysfs_mmc_queue:file rw_file_perms;
++allow init mozart_sysfs_perfhub:file { rw_file_perms setattr };
++allow init mozart_sysfs_sensors:file { rw_file_perms setattr };
++allow init sysfs_devices_system_cpu:file w_file_perms;
++allow init sysfs_bluetooth_writable:file { rw_file_perms setattr };
++allow init sysfs_wlan_fwpath:file { rw_file_perms setattr };
+diff --git a/sepolicy/kernel.te b/sepolicy/kernel.te
+new file mode 100644
+index 0000000..cb88b56
+--- /dev/null
++++ b/sepolicy/kernel.te
+@@ -0,0 +1,7 @@
++allow kernel self:global_capability_class_set mknod;
++allow kernel device:dir { write add_name remove_name };
++allow kernel device:chr_file { create getattr setattr unlink };
++allow kernel device:blk_file { create getattr setattr unlink };
++allow kernel mozart_hwlog_device:chr_file { open write };
++allow kernel mozart_sysfs_devfreq:file rw_file_perms;
++allow kernel sysfs_devices_system_cpu:file w_file_perms;
+diff --git a/sepolicy/oeminfo_nvm.te b/sepolicy/oeminfo_nvm.te
+index 0697111..fd15c04 100644
+--- a/sepolicy/oeminfo_nvm.te
++++ b/sepolicy/oeminfo_nvm.te
+@@ -4,3 +4,19 @@ type oeminfo_nvm_exec, exec_type, file_type;
+ 
+ # Started by init
+ init_daemon_domain(oeminfo_nvm)
++
++# /sbin lives on rootfs during early boot; oeminfo_nvm starts before these
++# ramdisk files can be relabeled to their *_exec context.
++allow oeminfo_nvm rootfs:file { getattr open read execute map entrypoint };
++
++allow oeminfo_nvm properties_device:dir r_dir_perms;
++
++# oeminfo_nvm creates its own /dev/socket/oeminfo_nvm endpoint instead of
++# declaring an init-managed socket.
++allow oeminfo_nvm device:dir { getattr search write add_name };
++allow oeminfo_nvm mozart_oeminfo_device_dir:dir create_dir_perms;
++allow oeminfo_nvm socket_device:dir rw_dir_perms;
++allow oeminfo_nvm mozart_oeminfo_socket:sock_file create_file_perms;
++allow oeminfo_nvm self:capability { chown fsetid };
++type_transition oeminfo_nvm device:dir mozart_oeminfo_device_dir "oinv";
++type_transition oeminfo_nvm socket_device:sock_file mozart_oeminfo_socket "oeminfo_nvm";
+diff --git a/sepolicy/oeminfo_nvm_server.te b/sepolicy/oeminfo_nvm_server.te
+new file mode 100644
+index 0000000..792ee41
+--- /dev/null
++++ b/sepolicy/oeminfo_nvm_server.te
+@@ -0,0 +1 @@
++allow oeminfo_nvm mozart_nve_device:chr_file rw_file_perms;
+diff --git a/sepolicy/public/file.te b/sepolicy/public/file.te
+new file mode 100644
+index 0000000..9411dd0
+--- /dev/null
++++ b/sepolicy/public/file.te
+@@ -0,0 +1,31 @@
++# Device nodes
++type mozart_fsck_block_device, dev_type;
++type mozart_hwlog_device, dev_type;
++type mozart_hisitest_block_device, dev_type;
++type mozart_nve_device, dev_type;
++type mozart_oeminfo_device_dir, dev_type;
++
++# Data files
++type modem_log_file, file_type;
++type modem_nv_file, file_type;
++type splash2_data_file, file_type;
++type mozart_gps_data_file, file_type, data_file_type, core_data_file_type;
++type mozart_sensors_data_file, file_type, data_file_type, core_data_file_type;
++
++# Service sockets
++type mozart_oeminfo_socket, file_type;
++type mozart_tee_socket, file_type;
++
++# Kernel interfaces
++type mozart_debugfs_ion, fs_type, debugfs_type;
++type mozart_proc_gpu_memory, fs_type, proc_type;
++type mozart_sysfs_audio_info, fs_type, sysfs_type;
++type mozart_sysfs_boardinfo, fs_type, sysfs_type;
++type mozart_sysfs_block2mtd, fs_type, sysfs_type;
++type mozart_sysfs_devfreq, fs_type, sysfs_type;
++type mozart_sysfs_fb, fs_type, sysfs_type;
++type mozart_sysfs_hmp, fs_type, sysfs_type;
++type mozart_sysfs_ksm, fs_type, sysfs_type;
++type mozart_sysfs_mmc_queue, fs_type, sysfs_type;
++type mozart_sysfs_perfhub, fs_type, sysfs_type;
++type mozart_sysfs_sensors, fs_type, sysfs_type;
+diff --git a/sepolicy/surfaceflinger.te b/sepolicy/surfaceflinger.te
+new file mode 100644
+index 0000000..f53f2b4
+--- /dev/null
++++ b/sepolicy/surfaceflinger.te
+@@ -0,0 +1 @@
++hal_server_domain(surfaceflinger, hal_graphics_allocator)
+diff --git a/sepolicy/system_server.te b/sepolicy/system_server.te
+new file mode 100644
+index 0000000..285f941
+--- /dev/null
++++ b/sepolicy/system_server.te
+@@ -0,0 +1,4 @@
++allow system_server sensors_device:chr_file rw_file_perms;
++allow system_server mozart_gps_data_file:dir search;
++allow system_server mozart_gps_data_file:fifo_file rw_file_perms;
++allow system_server mozart_sensors_data_file:file { rw_file_perms setattr };
+diff --git a/sepolicy/tee.te b/sepolicy/tee.te
+new file mode 100644
+index 0000000..12a642a
+--- /dev/null
++++ b/sepolicy/tee.te
+@@ -0,0 +1,5 @@
++# /sbin lives on rootfs during early boot; teecd uses the platform tee domain
++# and starts before the ramdisk executable can be relabeled to tee_exec.
++allow tee rootfs:file { getattr open read execute map entrypoint };
++
++allow tee properties_device:dir r_dir_perms;
+diff --git a/sepolicy/vendor/hal_audio_default.te b/sepolicy/vendor/hal_audio_default.te
+new file mode 100644
+index 0000000..96353ea
+--- /dev/null
++++ b/sepolicy/vendor/hal_audio_default.te
+@@ -0,0 +1,3 @@
++allow hal_audio_default self:netlink_kobject_uevent_socket create_socket_perms_no_ioctl;
++
++r_dir_file(hal_audio_default, mozart_sysfs_audio_info)
+diff --git a/sepolicy/vendor/hal_bluetooth_default.te b/sepolicy/vendor/hal_bluetooth_default.te
+new file mode 100644
+index 0000000..a3f3adc
+--- /dev/null
++++ b/sepolicy/vendor/hal_bluetooth_default.te
+@@ -0,0 +1,4 @@
++allow hal_bluetooth_default bluetooth_data_file:dir r_dir_perms;
++allow hal_bluetooth_default bluetooth_data_file:file r_file_perms;
++
++allow hal_bluetooth_default proc_bluetooth_writable:dir search;
+diff --git a/sepolicy/vendor/hal_memtrack_default.te b/sepolicy/vendor/hal_memtrack_default.te
+new file mode 100644
+index 0000000..6b892e6
+--- /dev/null
++++ b/sepolicy/vendor/hal_memtrack_default.te
+@@ -0,0 +1,2 @@
++r_dir_file(hal_memtrack_default, mozart_debugfs_ion)
++allow hal_memtrack_default mozart_proc_gpu_memory:file r_file_perms;
+diff --git a/sepolicy/vendor/hal_sensors_default.te b/sepolicy/vendor/hal_sensors_default.te
+new file mode 100644
+index 0000000..47c0f54
+--- /dev/null
++++ b/sepolicy/vendor/hal_sensors_default.te
+@@ -0,0 +1,4 @@
++allow hal_sensors_default sensors_device:chr_file rw_file_perms;
++allow hal_sensors_default mozart_sensors_data_file:file create_file_perms;
++
++r_dir_file(hal_sensors_default, mozart_sysfs_sensors)
+diff --git a/sepolicy/vendor/hal_wifi_default.te b/sepolicy/vendor/hal_wifi_default.te
+new file mode 100644
+index 0000000..848e3fa
+--- /dev/null
++++ b/sepolicy/vendor/hal_wifi_default.te
+@@ -0,0 +1,2 @@
++allow hal_wifi_default wifi_data_file:dir search;
++allow hal_wifi_default wifi_data_file:file r_file_perms;
+diff --git a/vendorsetup.sh b/vendorsetup.sh
+index 9cda2f1..e91c0b6 100644
+--- a/vendorsetup.sh
++++ b/vendorsetup.sh
+@@ -5,3 +5,4 @@
+ #
+ 
+ add_lunch_combo lineage_mozart-userdebug
++add_lunch_combo lineage_mozart-user
