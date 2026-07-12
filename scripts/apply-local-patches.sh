@@ -123,6 +123,10 @@ apply_once \
     "$PATCH_ROOT/patches/kernel/huawei/mozart/disable-debug-info.patch"
 
 apply_once \
+    "kernel/huawei/mozart" \
+    "$PATCH_ROOT/patches/kernel/huawei/mozart/arm64-nt-arm-system-call-regset.patch"
+
+apply_once \
     "vendor/lineage" \
     "$PATCH_ROOT/patches/vendor/lineage/disable-backuptool-and-hudson-fetch.patch"
 
