@@ -119,6 +119,10 @@ apply_once \
     "$PATCH_ROOT/patches/device/huawei/mozart/mozart-device-bringup-media-selinux.patch"
 
 apply_once \
+    "device/huawei/mozart" \
+    "$PATCH_ROOT/patches/device/huawei/mozart/legacy-mount-namespace-fd-selinux.patch"
+
+apply_once \
     "kernel/huawei/mozart" \
     "$PATCH_ROOT/patches/kernel/huawei/mozart/disable-debug-info.patch"
 
