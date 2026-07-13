@@ -1,0 +1,8 @@
+diff --git a/sepolicy/sysinit.te b/sepolicy/sysinit.te
+new file mode 100644
+index 0000000..4dd6cf2
+--- /dev/null
++++ b/sepolicy/sysinit.te
+@@ -0,0 +1,2 @@
++# Bionic resolves /proc/self/exe and enables RELRO on the shell interpreter.
++allow sysinit shell_exec:file { getattr read };

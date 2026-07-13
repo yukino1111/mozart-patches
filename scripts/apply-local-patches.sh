@@ -120,6 +120,10 @@ apply_once \
 
 apply_once \
     "device/huawei/mozart" \
+    "$PATCH_ROOT/patches/device/huawei/mozart/sysinit-shell-executable-getattr-selinux.patch"
+
+apply_once \
+    "device/huawei/mozart" \
     "$PATCH_ROOT/patches/device/huawei/mozart/legacy-mount-namespace-fd-selinux.patch"
 
 apply_once \
