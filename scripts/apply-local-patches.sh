@@ -120,6 +120,10 @@ apply_once \
 
 apply_once \
     "device/huawei/mozart" \
+    "$PATCH_ROOT/patches/device/huawei/mozart/m2-801w-bluetooth-battery-compat.patch"
+
+apply_once \
+    "device/huawei/mozart" \
     "$PATCH_ROOT/patches/device/huawei/mozart/sysinit-shell-executable-getattr-selinux.patch"
 
 apply_once \
@@ -142,6 +146,10 @@ apply_once \
 apply_once \
     "vendor/huawei/mozart" \
     "$PATCH_ROOT/patches/vendor/huawei/mozart/restore-emui31-gpu-omx-vendor-paths.patch"
+
+apply_once \
+    "vendor/huawei/mozart" \
+    "$PATCH_ROOT/patches/vendor/huawei/mozart/preserve-stock-mac-normalization-helper.patch"
 
 BLOB_CACHE="$PATCH_ROOT/proprietary-blobs/huawei/mozart"
 if [[ -d "$BLOB_CACHE" ]] && [[ -n "$(find "$BLOB_CACHE" -type f -print -quit)" ]]; then
