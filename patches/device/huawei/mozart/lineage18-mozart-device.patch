@@ -488,7 +488,7 @@ index a67687dcfcea2b49c598272ce4a5683e23b16e18..05a975495cd0009f376394d145f310c6
  # Performance
  ro.am.reschedule_service=true
 diff --git a/device.mk b/device.mk
-index d3b335538b30e59d24deb41a2c4dc5d5c5a70a64..4c765f7662dd54d816aab9a51036abfff663f99c 100644
+index d3b335538b30e59d24deb41a2c4dc5d5c5a70a64..edf75208186275f4400d8a3a8086aa3966960b34 100644
 --- a/device.mk
 +++ b/device.mk
 @@ -6,12 +6,16 @@
@@ -527,7 +527,20 @@ index d3b335538b30e59d24deb41a2c4dc5d5c5a70a64..4c765f7662dd54d816aab9a51036abff
  # Configstore
  PRODUCT_PACKAGES += \
      android.hardware.configstore@1.1-service
-@@ -94,6 +103,7 @@ PRODUCT_COPY_FILES += \
+@@ -71,6 +80,12 @@ PRODUCT_PACKAGES += \
+     android.hardware.health@2.0-impl \
+     android.hardware.health@2.0-service
+ 
++# Thermal
++PRODUCT_PACKAGES += \
++    android.hardware.thermal@1.0-impl \
++    android.hardware.thermal@1.0-service \
++    thermal.hi3635
++
+ # Keymaster
+ PRODUCT_PACKAGES += \
+     android.hardware.keymaster@3.0-impl \
+@@ -94,6 +109,7 @@ PRODUCT_COPY_FILES += \
      frameworks/av/services/audiopolicy/config/a2dp_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/a2dp_audio_policy_configuration.xml \
      frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
      frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml \
@@ -535,7 +548,7 @@ index d3b335538b30e59d24deb41a2c4dc5d5c5a70a64..4c765f7662dd54d816aab9a51036abff
      frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml
  
  # Memtrack
-@@ -138,6 +148,9 @@ PRODUCT_PACKAGES += \
+@@ -138,6 +154,9 @@ PRODUCT_PACKAGES += \
      android.hardware.power@1.0-service
  
  # Ramdisk
@@ -545,7 +558,7 @@ index d3b335538b30e59d24deb41a2c4dc5d5c5a70a64..4c765f7662dd54d816aab9a51036abff
  PRODUCT_PACKAGES += \
      fstab.hi3635 \
      init.hi3635.chip.usb.rc \
-@@ -168,6 +181,10 @@ PRODUCT_PACKAGES += \
+@@ -168,6 +187,10 @@ PRODUCT_PACKAGES += \
  PRODUCT_COPY_FILES += \
      $(DEVICE_PATH)/configs/sensors/_hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/_hals.conf
  
@@ -718,7 +731,7 @@ index 2a280acce998383df101abc5f4e6c7d561b053c7..fbcdbfa654c0179f52ab0959e42657df
  # Inherit some common LineageOS stuff.
  $(call inherit-product, vendor/lineage/config/common_full_tablet_wifionly.mk)
  
-@@ -25,8 +28,17 @@ PRODUCT_MODEL := MediaPad M2 8.0
+@@ -25,8 +31,17 @@ PRODUCT_MODEL := MediaPad M2 8.0
  PRODUCT_CHARACTERISTICS := tablet
  PRODUCT_GMS_CLIENTID_BASE := android-huawei
  
@@ -1033,7 +1046,6 @@ index 7819a89dc5787988783f07ae2d3789bc090c6a7e..a08f3bd5a92c4da81ad2d809755137d9
      <!-- Whether a software navigation bar should be shown. NOTE: in the future this may be
           autodetected from the Configuration. -->
      <bool name="config_showNavigationBar">true</bool>
-
 diff --git a/rootdir/Android.mk b/rootdir/Android.mk
 index 2ae7f8135374ceb27db12dc30c08c2aa16a67591..c17586975e97e4b93330a24190e88117c200c5f2 100755
 --- a/rootdir/Android.mk
@@ -1356,15 +1368,16 @@ index 0000000000000000000000000000000000000000..c229a9a356fb880f1720055c17a957ae
 +allow fsck mozart_fsck_block_device:blk_file rw_file_perms;
 diff --git a/sepolicy/genfs_contexts b/sepolicy/genfs_contexts
 new file mode 100644
-index 0000000000000000000000000000000000000000..e923d689c1c29778375db944b25f69e7c9b9a8ee
+index 0000000000000000000000000000000000000000..3b8c7c2c8ec6fad3996788aae4987c84ecfa5a93
 --- /dev/null
 +++ b/sepolicy/genfs_contexts
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,51 @@
 +# HiSilicon GPU memory accounting
 +genfscon proc /gpu_memory u:object_r:mozart_proc_gpu_memory:s0
 +genfscon debugfs /ion u:object_r:mozart_debugfs_ion:s0
 +
 +# Battery, lights, storage and performance sysfs nodes
++genfscon sysfs /devices/virtual/thermal u:object_r:sysfs_thermal:s0
 +genfscon sysfs /devices/fff34000.pmic/battery.87/power_supply/Battery u:object_r:sysfs_batteryinfo:s0
 +genfscon sysfs /devices/fff34000.pmic/battery.87/power_supply/Mains u:object_r:sysfs_batteryinfo:s0
 +genfscon sysfs /devices/fff34000.pmic/battery.87/power_supply/USB u:object_r:sysfs_batteryinfo:s0
@@ -1603,14 +1616,6 @@ index 0000000000000000000000000000000000000000..9164aebe4d8fc4bbb5144c3ca0eeb3a8
 +type mozart_sysfs_mmc_queue, fs_type, sysfs_type;
 +type mozart_sysfs_perfhub, fs_type, sysfs_type;
 +type mozart_sysfs_sensors, fs_type, sysfs_type;
-diff --git a/sepolicy/vendor/hal_light_default.te b/sepolicy/vendor/hal_light_default.te
-new file mode 100644
-index 0000000000000000000000000000000000000000..6490ad9a6d598239bce017ece439f59b135a9e8e
---- /dev/null
-+++ b/sepolicy/vendor/hal_light_default.te
-@@ -0,0 +1,2 @@
-+allow hal_light_default graphics_device:dir search;
-+allow hal_light_default graphics_device:chr_file rw_file_perms;
 diff --git a/sepolicy/surfaceflinger.te b/sepolicy/surfaceflinger.te
 new file mode 100644
 index 0000000000000000000000000000000000000000..f53f2b4614b5488fb33bf78c07063b239f286c91
@@ -1659,6 +1664,14 @@ index 0000000000000000000000000000000000000000..a3f3adcb2a9458364487f41cb6861d1f
 +allow hal_bluetooth_default bluetooth_data_file:file r_file_perms;
 +
 +allow hal_bluetooth_default proc_bluetooth_writable:dir search;
+diff --git a/sepolicy/vendor/hal_light_default.te b/sepolicy/vendor/hal_light_default.te
+new file mode 100644
+index 0000000000000000000000000000000000000000..6490ad9a6d598239bce017ece439f59b135a9e8e
+--- /dev/null
++++ b/sepolicy/vendor/hal_light_default.te
+@@ -0,0 +1,2 @@
++allow hal_light_default graphics_device:dir search;
++allow hal_light_default graphics_device:chr_file rw_file_perms;
 diff --git a/sepolicy/vendor/hal_memtrack_default.te b/sepolicy/vendor/hal_memtrack_default.te
 new file mode 100644
 index 0000000000000000000000000000000000000000..6b892e6b7b37543e3693372aa3f96a417469708e
@@ -1677,6 +1690,13 @@ index 0000000000000000000000000000000000000000..47c0f54c0afca65e64f981dbb4519bd9
 +allow hal_sensors_default mozart_sensors_data_file:file create_file_perms;
 +
 +r_dir_file(hal_sensors_default, mozart_sysfs_sensors)
+diff --git a/sepolicy/vendor/hal_thermal_default.te b/sepolicy/vendor/hal_thermal_default.te
+new file mode 100644
+index 0000000000000000000000000000000000000000..e2567f125c1e1722d55390a7dcd6780144c19931
+--- /dev/null
++++ b/sepolicy/vendor/hal_thermal_default.te
+@@ -0,0 +1 @@
++r_dir_file(hal_thermal_default, sysfs_thermal)
 diff --git a/sepolicy/vendor/hal_wifi_default.te b/sepolicy/vendor/hal_wifi_default.te
 new file mode 100644
 index 0000000000000000000000000000000000000000..848e3faac038c6a2466f22a06ed00eb3e6938790
@@ -1694,6 +1714,194 @@ index 0000000000000000000000000000000000000000..b5faac53f25c0723ca70ff60251e1612
 +# The legacy 3.10 kernel exposes mount namespace inodes through procfs.
 +# Limit the compatibility exception to opening and receiving namespace fds.
 +allow zygote proc:file { open read };
+diff --git a/thermal/Android.bp b/thermal/Android.bp
+new file mode 100644
+index 0000000000000000000000000000000000000000..4278f398e93677db2e87e58572c773d78d1b47c4
+--- /dev/null
++++ b/thermal/Android.bp
+@@ -0,0 +1,12 @@
++cc_library_shared {
++    name: "thermal.hi3635",
++    vendor: true,
++    relative_install_path: "hw",
++    srcs: ["thermal.c"],
++    header_libs: ["libhardware_headers"],
++    shared_libs: ["liblog"],
++    cflags: [
++        "-Wall",
++        "-Werror",
++    ],
++}
+diff --git a/thermal/thermal.c b/thermal/thermal.c
+new file mode 100644
+index 0000000000000000000000000000000000000000..66c366f5350bb4dbe01d023e75aa6fb3bd24bd81
+--- /dev/null
++++ b/thermal/thermal.c
+@@ -0,0 +1,164 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++#include <dirent.h>
++#include <errno.h>
++#include <pthread.h>
++#include <stdio.h>
++#include <string.h>
++
++#define LOG_TAG "ThermalHAL-hi3635"
++#include <log/log.h>
++
++#include <hardware/hardware.h>
++#include <hardware/thermal.h>
++
++#define MAX_PATH_LENGTH 128
++#define MAX_TYPE_LENGTH 32
++#define THERMAL_DIR "/sys/devices/virtual/thermal"
++#define THERMAL_ZONE_PREFIX "thermal_zone"
++
++struct temperature_sensor {
++    const char *name;
++    enum temperature_type type;
++    char path[MAX_PATH_LENGTH];
++};
++
++static struct temperature_sensor sensors[] = {
++    { "cluster0", DEVICE_TEMPERATURE_CPU, "" },
++    { "cluster1", DEVICE_TEMPERATURE_CPU, "" },
++    { "gpu", DEVICE_TEMPERATURE_GPU, "" },
++};
++
++static pthread_once_t sensors_once = PTHREAD_ONCE_INIT;
++
++static int read_string(const char *path, char *value, size_t size) {
++    FILE *file = fopen(path, "re");
++    if (file == NULL) {
++        return -errno;
++    }
++
++    if (fgets(value, size, file) == NULL) {
++        int error = ferror(file) && errno != 0 ? -errno : -EIO;
++        fclose(file);
++        return error;
++    }
++    fclose(file);
++
++    value[strcspn(value, "\r\n")] = '\0';
++    return 0;
++}
++
++static void find_temperature_sensors(void) {
++    DIR *directory = opendir(THERMAL_DIR);
++    if (directory == NULL) {
++        ALOGE("Failed to open %s: %s", THERMAL_DIR, strerror(errno));
++        return;
++    }
++
++    struct dirent *entry;
++    while ((entry = readdir(directory)) != NULL) {
++        if (strncmp(entry->d_name, THERMAL_ZONE_PREFIX,
++                    strlen(THERMAL_ZONE_PREFIX)) != 0) {
++            continue;
++        }
++
++        char path[MAX_PATH_LENGTH];
++        char type[MAX_TYPE_LENGTH];
++        snprintf(path, sizeof(path), "%s/%s/type", THERMAL_DIR, entry->d_name);
++        if (read_string(path, type, sizeof(type)) != 0) {
++            continue;
++        }
++
++        for (size_t i = 0; i < sizeof(sensors) / sizeof(sensors[0]); ++i) {
++            if (strcmp(type, sensors[i].name) == 0) {
++                snprintf(sensors[i].path, sizeof(sensors[i].path), "%s/%s/temp",
++                         THERMAL_DIR, entry->d_name);
++                break;
++            }
++        }
++    }
++    closedir(directory);
++}
++
++static float read_temperature(const struct temperature_sensor *sensor) {
++    if (sensor->path[0] == '\0') {
++        return UNKNOWN_TEMPERATURE;
++    }
++
++    FILE *file = fopen(sensor->path, "re");
++    if (file == NULL) {
++        ALOGE("Failed to open %s: %s", sensor->path, strerror(errno));
++        return UNKNOWN_TEMPERATURE;
++    }
++
++    float temperature;
++    if (fscanf(file, "%f", &temperature) != 1) {
++        ALOGE("Failed to read %s", sensor->path);
++        temperature = UNKNOWN_TEMPERATURE;
++    }
++    fclose(file);
++    return temperature;
++}
++
++static ssize_t get_temperatures(thermal_module_t *module, temperature_t *list,
++                                size_t size) {
++    (void)module;
++    pthread_once(&sensors_once, find_temperature_sensors);
++
++    const size_t sensor_count = sizeof(sensors) / sizeof(sensors[0]);
++    if (list == NULL) {
++        return sensor_count;
++    }
++
++    size_t output_count = size < sensor_count ? size : sensor_count;
++    for (size_t i = 0; i < output_count; ++i) {
++        list[i] = (temperature_t) {
++            .type = sensors[i].type,
++            .name = sensors[i].name,
++            // The hi3635 thermal driver exports CPU/GPU values in degrees Celsius.
++            .current_value = read_temperature(&sensors[i]),
++            .throttling_threshold = UNKNOWN_TEMPERATURE,
++            .shutdown_threshold = UNKNOWN_TEMPERATURE,
++            .vr_throttling_threshold = UNKNOWN_TEMPERATURE,
++        };
++    }
++
++    return sensor_count;
++}
++
++static ssize_t get_cpu_usages(thermal_module_t *module, cpu_usage_t *list) {
++    (void)module;
++    (void)list;
++    return 0;
++}
++
++static ssize_t get_cooling_devices(thermal_module_t *module,
++                                   cooling_device_t *list, size_t size) {
++    (void)module;
++    (void)list;
++    (void)size;
++    return 0;
++}
++
++static struct hw_module_methods_t thermal_module_methods = {
++    .open = NULL,
++};
++
++thermal_module_t HAL_MODULE_INFO_SYM = {
++    .common = {
++        .tag = HARDWARE_MODULE_TAG,
++        .module_api_version = THERMAL_HARDWARE_MODULE_API_VERSION_0_1,
++        .hal_api_version = HARDWARE_HAL_API_VERSION,
++        .id = THERMAL_HARDWARE_MODULE_ID,
++        .name = "HiSilicon hi3635 Thermal HAL",
++        .author = "The LineageOS Project",
++        .methods = &thermal_module_methods,
++    },
++    .getTemperatures = get_temperatures,
++    .getCpuUsages = get_cpu_usages,
++    .getCoolingDevices = get_cooling_devices,
++};
 diff --git a/tools/audio_legacy_symbols.map b/tools/audio_legacy_symbols.map
 new file mode 100644
 index 0000000000000000000000000000000000000000..835aee217de6c12e077e9f7b7f17deb76973da02
@@ -1798,7 +2006,7 @@ index 9cda2f1ff6be0e3ad4e2113e2792021d1ead4fcb..88d5a1711002e5c766c385e119f9b4ca
 -
 -add_lunch_combo lineage_mozart-userdebug
 diff --git a/vintf/manifest.xml b/vintf/manifest.xml
-index 7746722730a802b85fb2439745ee8fc5a7b949aa..d0d058a52f31ff9a0d12f7ff5cc7d4989f6f4a16 100644
+index 7746722730a802b85fb2439745ee8fc5a7b949aa..456e9f52649c3d158dc878505e57f625b3e63d58 100644
 --- a/vintf/manifest.xml
 +++ b/vintf/manifest.xml
 @@ -26,15 +26,6 @@
@@ -1817,23 +2025,21 @@ index 7746722730a802b85fb2439745ee8fc5a7b949aa..d0d058a52f31ff9a0d12f7ff5cc7d498
      <hal format="hidl">
          <name>android.hardware.configstore</name>
          <transport>hwbinder</transport>
-@@ -173,15 +164,6 @@
+@@ -174,11 +165,11 @@
+         </interface>
+     </hal>
+     <hal format="hidl">
+-        <name>android.hardware.usb</name>
++        <name>android.hardware.thermal</name>
+         <transport>hwbinder</transport>
+         <version>1.0</version>
+         <interface>
+-            <name>IUsb</name>
++            <name>IThermal</name>
              <instance>default</instance>
          </interface>
      </hal>
--    <hal format="hidl">
--        <name>android.hardware.usb</name>
--        <transport>hwbinder</transport>
--        <version>1.0</version>
--        <interface>
--            <name>IUsb</name>
--            <instance>default</instance>
--        </interface>
--    </hal>
-     <hal format="hidl">
-         <name>android.hardware.vibrator</name>
-         <transport>hwbinder</transport>
-@@ -191,34 +173,4 @@
+@@ -191,34 +182,4 @@
              <instance>default</instance>
          </interface>
      </hal>
