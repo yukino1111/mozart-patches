@@ -189,9 +189,9 @@ index 6bb7b8d21c2b6d12fe90228736476e61b832b75f..1d91a01ca246d97d7fa2f6d8eae74436
 +    Vector<Rect> mStorage;
  };
  
- 
+
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index 878761b07702cf8e5d7832fb75bcb6b0449af46d..55d25ab55c49fdc72db90fae9ea5926b2281bf53 100644
+index 878761b07702cf8e5d7832fb75bcb6b0449af46d..112064def3b8f68c96b628b7b398681487a5f4e2 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
 @@ -48,6 +48,7 @@
@@ -224,27 +224,26 @@ index 878761b07702cf8e5d7832fb75bcb6b0449af46d..55d25ab55c49fdc72db90fae9ea5926b
  
  #include <algorithm>
  #include <cinttypes>
-@@ -4285,6 +4289,23 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& display, hal:
+@@ -4285,6 +4289,21 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& display, hal:
          return;
      }
  
-+    if (mode == hal::PowerMode::OFF || mode == hal::PowerMode::ON) {
-+        const int fbBlankMode =
-+                mode == hal::PowerMode::OFF ? FB_BLANK_POWERDOWN : FB_BLANK_UNBLANK;
++    // The legacy Huawei HWC does not reliably blank the LCD framebuffer on
++    // power-off. Force power-down here, but leave power-on to HWC so the old
++    // front buffer is not exposed before the keyguard frame is ready.
++    if (mode == hal::PowerMode::OFF) {
 +        const int fd = open("/dev/graphics/fb0", O_WRONLY);
 +        if (fd < 0) {
-+            ALOGE("Error opening LCD framebuffer: %d (%s)", errno, strerror(errno));
++            ALOGE("Error opening LCD framebuffer: %s", strerror(errno));
 +        } else {
-+            const int ret = ioctl(fd, FBIOBLANK, fbBlankMode);
-+            close(fd);
-+
-+            if (ret < 0) {
-+                ALOGE("Error setting LCD blank mode %d: %d (%s)", fbBlankMode, errno,
-+                      strerror(errno));
++            if (ioctl(fd, FBIOBLANK, FB_BLANK_POWERDOWN) < 0) {
++                ALOGE("Error powering down LCD framebuffer: %s", strerror(errno));
 +            }
++            close(fd);
 +        }
 +    }
 +
      display->setPowerMode(mode);
  
      if (mInterceptor->isEnabled()) {
+ 

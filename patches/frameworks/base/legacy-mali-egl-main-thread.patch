@@ -136,6 +136,17 @@ index 4f3f283859b48d10ce4dc7c1b59a06f542c2b66d..9a54d826cdf3dc4ddf9cf14c038f29a9
  }
  
  void setAngleInfo_native(JNIEnv* env, jobject clazz, jstring path, jstring appName, jstring devOptIn,
+diff --git a/libs/hwui/apex/jni_runtime.cpp b/libs/hwui/apex/jni_runtime.cpp
+index a114e2f4215705b5e5fb08972e5795cd6568ac16..5f9cc1ffde82c850cca5ffd50543e9009ec876f2 100644
+--- a/libs/hwui/apex/jni_runtime.cpp
++++ b/libs/hwui/apex/jni_runtime.cpp
+@@ -174,4 +174,4 @@ void zygote_preload_graphics() {
+     if (Properties::peekRenderPipelineType() == RenderPipelineType::SkiaGL) {
+         eglGetDisplay(EGL_DEFAULT_DISPLAY);
+     }
+-}
+\ No newline at end of file
++}
 diff --git a/libs/hwui/renderthread/RenderThread.cpp b/libs/hwui/renderthread/RenderThread.cpp
 index 206b58f62ea72108c731a540e38aaa2f5ff8a0b3..f804d4ae2c6054f44fff128ae89b223670557934 100644
 --- a/libs/hwui/renderthread/RenderThread.cpp

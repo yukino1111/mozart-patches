@@ -11,7 +11,7 @@ index 8ca1677fe8be6146b9cedb7001fb2e3bddf4a62a..f345628e8cc13e91ec23c5f38fd666c8
 +    lineage_mozart-userdebug \
 +    lineage_mozart-user
 diff --git a/BoardConfig.mk b/BoardConfig.mk
-index d93781e1b26892e560d9b164314a2453795c53ee..ebfe6e467ba815f8142f447d4e3226c23c165718 100644
+index d93781e1b26892e560d9b164314a2453795c53ee..bbac796fc818f2993b0ca3e73003d78f317d8a8b 100644
 --- a/BoardConfig.mk
 +++ b/BoardConfig.mk
 @@ -39,6 +39,9 @@ TARGET_NO_RADIOIMAGE := true
@@ -32,7 +32,7 @@ index d93781e1b26892e560d9b164314a2453795c53ee..ebfe6e467ba815f8142f447d4e3226c2
  TARGET_EXFAT_DRIVER := exfat
  TARGET_USERIMAGES_USE_EXT4 := true
  
-@@ -76,7 +80,7 @@ TARGET_INIT_VENDOR_LIB := libinit_huawei_hi3635
+@@ -76,23 +80,36 @@ TARGET_INIT_VENDOR_LIB := libinit_huawei_hi3635
  TARGET_RECOVERY_DEVICE_MODULES := libinit_huawei_hi3635
  
  # Kernel
@@ -41,7 +41,9 @@ index d93781e1b26892e560d9b164314a2453795c53ee..ebfe6e467ba815f8142f447d4e3226c2
  BOARD_KERNEL_PAGESIZE := 2048
  BOARD_KERNEL_CMDLINE := \
      mem=3072M \
-@@ -86,13 +90,27 @@ BOARD_KERNEL_CMDLINE := \
+     coherent_pool=512K \
+     mmcparts=mmcblk0:p1(vrl),p2(vrl_backup),p6(modemnvm_factory),p9(splash),p10(modemnvm_backup),p11(modemnvm_img),p12(modemnvm_system),p14(3rdmodemnvm),p15(3rdmodemnvmback),p17(modem_om),p20(modemnvm_update),p30(modem),p31(modem_dsp),p32(dfx),p33(3rdmodem) \
+-    androidboot.selinux=permissive \
      ate_enable=true
  
  BOARD_MKBOOTIMG_ARGS := \
@@ -72,7 +74,14 @@ index d93781e1b26892e560d9b164314a2453795c53ee..ebfe6e467ba815f8142f447d4e3226c2
  
  # Malloc
  MALLOC_SVELTE := true
-@@ -114,6 +132,8 @@ TARGET_SYSTEM_PROP := $(DEVICE_PATH)/configs/props/system.prop
+@@ -108,12 +125,15 @@ BOARD_FLASH_BLOCK_SIZE := 131072
+ # Platform
+ TARGET_BOARD_PLATFORM := hi3635
+ BOARD_VENDOR_PLATFORM := hi3635
++VENDOR_SECURITY_PATCH := 2016-10-01
+ 
+ # Properties
+ TARGET_SYSTEM_PROP := $(DEVICE_PATH)/configs/props/system.prop
  
  # Recovery
  TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/fstab.hi3635
@@ -91,6 +100,133 @@ index d93781e1b26892e560d9b164314a2453795c53ee..ebfe6e467ba815f8142f447d4e3226c2
  
  # Vintf
  DEVICE_MANIFEST_FILE := $(DEVICE_PATH)/vintf/manifest.xml
+diff --git a/audio/audio_policy_configuration.xml b/audio/audio_policy_configuration.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..7b97a7b2386f4a75ca772e81d3f302a793353cac
+--- /dev/null
++++ b/audio/audio_policy_configuration.xml
+@@ -0,0 +1,95 @@
++<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
++<!--
++     Copyright (C) 2026 The LineageOS Project
++
++     SPDX-License-Identifier: Apache-2.0
++-->
++<audioPolicyConfiguration version="1.0"
++        xmlns:xi="http://www.w3.org/2001/XInclude">
++    <globalConfiguration speaker_drc_enabled="false"/>
++
++    <modules>
++        <module name="primary" halVersion="2.0">
++            <attachedDevices>
++                <item>Earpiece</item>
++                <item>Speaker</item>
++                <item>Built-In Mic</item>
++                <item>Built-In Back Mic</item>
++                <item>Voice Call In</item>
++            </attachedDevices>
++            <defaultOutputDevice>Speaker</defaultOutputDevice>
++
++            <mixPorts>
++                <mixPort name="primary output" role="source"
++                        flags="AUDIO_OUTPUT_FLAG_PRIMARY">
++                    <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
++                            samplingRates="48000"
++                            channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
++                </mixPort>
++                <mixPort name="primary input" role="sink">
++                    <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
++                            samplingRates="8000,11025,16000,22050,24000,32000,44100,48000"
++                            channelMasks="AUDIO_CHANNEL_IN_MONO,AUDIO_CHANNEL_IN_STEREO,AUDIO_CHANNEL_IN_VOICE_CALL"/>
++                </mixPort>
++            </mixPorts>
++
++            <devicePorts>
++                <devicePort tagName="Earpiece" type="AUDIO_DEVICE_OUT_EARPIECE"
++                        role="sink"/>
++                <devicePort tagName="Speaker" type="AUDIO_DEVICE_OUT_SPEAKER"
++                        role="sink"/>
++                <devicePort tagName="Wired Headset"
++                        type="AUDIO_DEVICE_OUT_WIRED_HEADSET" role="sink"/>
++                <devicePort tagName="Wired Headphones"
++                        type="AUDIO_DEVICE_OUT_WIRED_HEADPHONE" role="sink"/>
++                <devicePort tagName="BT SCO"
++                        type="AUDIO_DEVICE_OUT_BLUETOOTH_SCO" role="sink"/>
++                <devicePort tagName="BT SCO Headset"
++                        type="AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET" role="sink"/>
++                <devicePort tagName="BT SCO Car Kit"
++                        type="AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT" role="sink"/>
++                <devicePort tagName="HDMI"
++                        type="AUDIO_DEVICE_OUT_AUX_DIGITAL" role="sink"/>
++                <devicePort tagName="Digital Dock"
++                        type="AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET" role="sink"/>
++                <devicePort tagName="FM"
++                        type="AUDIO_DEVICE_OUT_FM" role="sink"/>
++
++                <devicePort tagName="Built-In Mic"
++                        type="AUDIO_DEVICE_IN_BUILTIN_MIC" role="source"/>
++                <devicePort tagName="Built-In Back Mic"
++                        type="AUDIO_DEVICE_IN_BACK_MIC" role="source"/>
++                <devicePort tagName="Wired Headset Mic"
++                        type="AUDIO_DEVICE_IN_WIRED_HEADSET" role="source"/>
++                <devicePort tagName="BT SCO Headset Mic"
++                        type="AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET" role="source"/>
++                <devicePort tagName="Voice Call In"
++                        type="AUDIO_DEVICE_IN_VOICE_CALL" role="source"/>
++                <devicePort tagName="FM Tuner"
++                        type="AUDIO_DEVICE_IN_FM_TUNER" role="source"/>
++            </devicePorts>
++
++            <routes>
++                <route type="mix" sink="Earpiece" sources="primary output"/>
++                <route type="mix" sink="Speaker" sources="primary output"/>
++                <route type="mix" sink="Wired Headset" sources="primary output"/>
++                <route type="mix" sink="Wired Headphones" sources="primary output"/>
++                <route type="mix" sink="BT SCO" sources="primary output"/>
++                <route type="mix" sink="BT SCO Headset" sources="primary output"/>
++                <route type="mix" sink="BT SCO Car Kit" sources="primary output"/>
++                <route type="mix" sink="HDMI" sources="primary output"/>
++                <route type="mix" sink="Digital Dock" sources="primary output"/>
++                <route type="mix" sink="FM" sources="primary output"/>
++                <route type="mix" sink="primary input"
++                        sources="Built-In Mic,Built-In Back Mic,Wired Headset Mic,BT SCO Headset Mic,Voice Call In,FM Tuner"/>
++            </routes>
++        </module>
++
++        <xi:include href="a2dp_audio_policy_configuration.xml"/>
++        <xi:include href="usb_audio_policy_configuration.xml"/>
++        <xi:include href="r_submix_audio_policy_configuration.xml"/>
++    </modules>
++
++    <xi:include href="audio_policy_volumes.xml"/>
++    <xi:include href="default_volume_tables.xml"/>
++</audioPolicyConfiguration>
+diff --git a/config.fs b/config.fs
+new file mode 100644
+index 0000000000000000000000000000000000000000..387da9ab017a348ba3a5820f5f101f782a138c5a
+--- /dev/null
++++ b/config.fs
+@@ -0,0 +1,20 @@
++# Executables installed directly under the system-as-root /sbin directory are
++# not covered by Android's default /system/bin executable mode rules.
++
++[sbin/hw_healthd]
++mode: 0755
++user: AID_ROOT
++group: AID_ROOT
++caps: 0
++
++[sbin/oeminfo_nvm_server]
++mode: 0755
++user: AID_ROOT
++group: AID_ROOT
++caps: 0
++
++[sbin/teecd]
++mode: 0755
++user: AID_ROOT
++group: AID_ROOT
++caps: 0
 diff --git a/configs/media/media_codecs.xml b/configs/media/media_codecs.xml
 index 149934162d2dc5bf239a93eb282d18224a07ab54..6b5935d987c08102576946c1038c4b4e814563cc 100644
 --- a/configs/media/media_codecs.xml
@@ -244,36 +380,37 @@ index 149934162d2dc5bf239a93eb282d18224a07ab54..6b5935d987c08102576946c1038c4b4e
      </Encoders>
  </MediaCodecs>
 diff --git a/configs/media/media_codecs_performance.xml b/configs/media/media_codecs_performance.xml
-index 1408b03876b4118f41821a52a9cd995bf98f7b55..5001759ea934ba0b02cd71c28a640ff6a2b44803 100644
+index 1408b03876b4118f41821a52a9cd995bf98f7b55..3307638a8832ca25ffaab02cad33befd4e9544bb 100644
 --- a/configs/media/media_codecs_performance.xml
 +++ b/configs/media/media_codecs_performance.xml
-@@ -15,11 +15,21 @@
+@@ -15,12 +15,20 @@
  -->
  <MediaCodecs>
      <Encoders>
 -        <MediaCodec name="OMX.k3.video.encoder.avc" update="true">
-+        <MediaCodec name="OMX.IMG.TOPAZ.VIDEO.Encoder" update="true">
-             <Type name="video/avc">
+-            <Type name="video/avc">
 -                <Limit name="measured-frame-rate-320x240" range="357-357" />
 -                <Limit name="measured-frame-rate-720x480" range="118-118" />
 -                <Limit name="measured-frame-rate-1280x720" range="50-50" />
-+                <Limit name="measured-frame-rate-320x240" range="477-477" />
-+                <Limit name="measured-frame-rate-720x480" range="173-173" />
-+                <Limit name="measured-frame-rate-1280x720" range="75-75" />
-+                <Limit name="measured-frame-rate-1920x1080" range="37-37" />
-+            </Type>
-+            <Type name="video/mp4v-es">
-+                <Limit name="measured-frame-rate-176x144" range="440-440" />
-+                <Limit name="measured-frame-rate-352x288" range="331-331" />
-+                <Limit name="measured-frame-rate-640x480" range="179-179" />
-+            </Type>
-+            <Type name="video/3gpp">
-+                <Limit name="measured-frame-rate-176x144" range="403-403" />
-+                <Limit name="measured-frame-rate-352x288" range="319-319" />
-             </Type>
+-            </Type>
++        <MediaCodec name="OMX.IMG.TOPAZ.VIDEO.Encoder" type="video/avc" update="true">
++            <Limit name="measured-frame-rate-320x240" range="477-477" />
++            <Limit name="measured-frame-rate-720x480" range="173-173" />
++            <Limit name="measured-frame-rate-1280x720" range="75-75" />
++            <Limit name="measured-frame-rate-1920x1080" range="37-37" />
++        </MediaCodec>
++        <MediaCodec name="OMX.IMG.TOPAZ.VIDEO.Encoder" type="video/mp4v-es" update="true">
++            <Limit name="measured-frame-rate-176x144" range="440-440" />
++            <Limit name="measured-frame-rate-352x288" range="331-331" />
++            <Limit name="measured-frame-rate-640x480" range="179-179" />
++        </MediaCodec>
++        <MediaCodec name="OMX.IMG.TOPAZ.VIDEO.Encoder" type="video/3gpp" update="true">
++            <Limit name="measured-frame-rate-176x144" range="403-403" />
++            <Limit name="measured-frame-rate-352x288" range="319-319" />
          </MediaCodec>
          <MediaCodec name="OMX.google.h264.encoder" type="video/avc" update="true">
-@@ -42,20 +52,25 @@
+             <Limit name="measured-frame-rate-320x240" range="498-498" />
+@@ -42,20 +50,25 @@
          </MediaCodec>
      </Encoders>
      <Decoders>
@@ -282,13 +419,7 @@ index 1408b03876b4118f41821a52a9cd995bf98f7b55..5001759ea934ba0b02cd71c28a640ff6
 -            <Limit name="measured-frame-rate-720x480" range="180-180" />
 -            <Limit name="measured-frame-rate-1280x720" range="120-120" />
 -            <Limit name="measured-frame-rate-1920x1088" range="65-65" />
-+        <MediaCodec name="OMX.IMG.MSVDX.Decoder.AVC" type="video/avc" update="true">
-+            <Limit name="measured-frame-rate-176x144" range="513-513" />
-+            <Limit name="measured-frame-rate-320x240" range="1208-1208" />
-+            <Limit name="measured-frame-rate-720x480" range="1178-1178" />
-+            <Limit name="measured-frame-rate-1280x720" range="500-500" />
-+            <Limit name="measured-frame-rate-1920x1088" range="260-260" />
-         </MediaCodec>
+-        </MediaCodec>
 -        <MediaCodec name="OMX.k3.video.decoder.mpeg4" update="true">
 -            <Type name="video/mp4v-es">
 -                <Limit name="measured-frame-rate-480x360" range="350-350" />
@@ -297,6 +428,13 @@ index 1408b03876b4118f41821a52a9cd995bf98f7b55..5001759ea934ba0b02cd71c28a640ff6
 -                <Limit name="measured-frame-rate-176x144" range="200-700" />
 -                <Limit name="measured-frame-rate-352x288" range="450-450" />
 -            </Type>
++        <MediaCodec name="OMX.IMG.MSVDX.Decoder.AVC" type="video/avc" update="true">
++            <Limit name="measured-frame-rate-176x144" range="513-513" />
++            <Limit name="measured-frame-rate-320x240" range="1208-1208" />
++            <Limit name="measured-frame-rate-720x480" range="1178-1178" />
++            <Limit name="measured-frame-rate-1280x720" range="500-500" />
++            <Limit name="measured-frame-rate-1920x1088" range="260-260" />
++        </MediaCodec>
 +        <MediaCodec name="OMX.IMG.MSVDX.Decoder.H263" type="video/3gpp" update="true">
 +            <Limit name="measured-frame-rate-176x144" range="3000-3000" />
 +            <Limit name="measured-frame-rate-352x288" range="3000-3000" />
@@ -312,7 +450,7 @@ index 1408b03876b4118f41821a52a9cd995bf98f7b55..5001759ea934ba0b02cd71c28a640ff6
          </MediaCodec>
          <MediaCodec name="OMX.google.h264.decoder" type="video/avc" update="true">
              <Limit name="measured-frame-rate-320x240" range="823-1200" />
-@@ -89,4 +104,3 @@
+@@ -89,4 +102,3 @@
          </MediaCodec>
      </Decoders>
  </MediaCodecs>
@@ -350,10 +488,10 @@ index a67687dcfcea2b49c598272ce4a5683e23b16e18..05a975495cd0009f376394d145f310c6
  # Performance
  ro.am.reschedule_service=true
 diff --git a/device.mk b/device.mk
-index d3b335538b30e59d24deb41a2c4dc5d5c5a70a64..892efb0ef1efcb41ff234880c38fa55891033904 100644
+index d3b335538b30e59d24deb41a2c4dc5d5c5a70a64..4c765f7662dd54d816aab9a51036abfff663f99c 100644
 --- a/device.mk
 +++ b/device.mk
-@@ -6,6 +6,9 @@
+@@ -6,12 +6,16 @@
  
  DEVICE_PATH := device/huawei/mozart
  
@@ -363,7 +501,14 @@ index d3b335538b30e59d24deb41a2c4dc5d5c5a70a64..892efb0ef1efcb41ff234880c38fa558
  # AAPT
  PRODUCT_AAPT_CONFIG := normal
  PRODUCT_AAPT_PREF_CONFIG := xxhdpi
-@@ -35,12 +38,17 @@ PRODUCT_PACKAGES += \
+ 
+ # Audio
+ PRODUCT_COPY_FILES += \
++    $(DEVICE_PATH)/audio/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
+     $(DEVICE_PATH)/audio/audio_policy.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy.conf \
+     $(DEVICE_PATH)/audio/audio_effects.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.conf
+ 
+@@ -35,12 +39,17 @@ PRODUCT_PACKAGES += \
  # Bluetooth
  PRODUCT_PACKAGES += \
      android.hardware.bluetooth@1.0-impl \
@@ -382,7 +527,15 @@ index d3b335538b30e59d24deb41a2c4dc5d5c5a70a64..892efb0ef1efcb41ff234880c38fa558
  # Configstore
  PRODUCT_PACKAGES += \
      android.hardware.configstore@1.1-service
-@@ -138,6 +146,9 @@ PRODUCT_PACKAGES += \
+@@ -94,6 +103,7 @@ PRODUCT_COPY_FILES += \
+     frameworks/av/services/audiopolicy/config/a2dp_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/a2dp_audio_policy_configuration.xml \
+     frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
+     frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml \
++    frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
+     frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml
+ 
+ # Memtrack
+@@ -138,6 +148,9 @@ PRODUCT_PACKAGES += \
      android.hardware.power@1.0-service
  
  # Ramdisk
@@ -392,6 +545,17 @@ index d3b335538b30e59d24deb41a2c4dc5d5c5a70a64..892efb0ef1efcb41ff234880c38fa558
  PRODUCT_PACKAGES += \
      fstab.hi3635 \
      init.hi3635.chip.usb.rc \
+@@ -168,6 +181,10 @@ PRODUCT_PACKAGES += \
+ PRODUCT_COPY_FILES += \
+     $(DEVICE_PATH)/configs/sensors/_hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/_hals.conf
+ 
++# Trust
++PRODUCT_PACKAGES += \
++    vendor.lineage.trust@1.0-service
++
+ # Screen
+ TARGET_SCREEN_HEIGHT := 1920
+ TARGET_SCREEN_WIDTH := 1200
 diff --git a/include/hardware/audio.h b/include/hardware/audio.h
 index c462a4c924b9ddd7b71003a27dc2b3eff94b0025..f8b26e5a4a127b37bfbe4c49e30e1685e6f2da18 100644
 --- a/include/hardware/audio.h
@@ -456,6 +620,25 @@ index c462a4c924b9ddd7b71003a27dc2b3eff94b0025..f8b26e5a4a127b37bfbe4c49e30e1685
  };
  typedef struct audio_hw_device audio_hw_device_t;
  
+diff --git a/libinit/Android.bp b/libinit/Android.bp
+new file mode 100644
+index 0000000000000000000000000000000000000000..c5ea7eb6a2e509ca21e144292f781814e0955c29
+--- /dev/null
++++ b/libinit/Android.bp
+@@ -0,0 +1,13 @@
++//
++// Copyright (C) 2025 The LineageOS Project
++//
++// SPDX-License-Identifier: Apache-2.0
++//
++
++cc_library_static {
++    name: "libinit_huawei_hi3635",
++    recovery_available: true,
++    srcs: ["init_huawei_hi3635.cpp"],
++    include_dirs: ["system/core/init"],
++    shared_libs: ["libbase"],
++}
 diff --git a/libinit/Android.mk b/libinit/Android.mk
 deleted file mode 100644
 index dc72bf1ba540711ffc71d6d93ed7c33cc7aa5d54..0000000000000000000000000000000000000000
@@ -516,10 +699,16 @@ index 33a0e83cea8955141d7eefa61cf5110bb332ff6c..6cee94cfb3ebeb2e1a3ad7578d500510
 +            false);
  }
 diff --git a/lineage_mozart.mk b/lineage_mozart.mk
-index 2a280acce998383df101abc5f4e6c7d561b053c7..8065d0875a877fe8529481dbb26617bec6a330d6 100644
+index 2a280acce998383df101abc5f4e6c7d561b053c7..fbcdbfa654c0179f52ab0959e42657df1d02321e 100644
 --- a/lineage_mozart.mk
 +++ b/lineage_mozart.mk
-@@ -12,6 +12,9 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_m.mk)
+@@ -9,9 +9,15 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base.mk)
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_m.mk)
+ 
++# Avoid the legacy libhidl one-second getService delay; this product ships a complete VINTF manifest.
++PRODUCT_ENFORCE_VINTF_MANIFEST_OVERRIDE := true
++
  # Inherit device configurations.
  $(call inherit-product, $(LOCAL_PATH)/device.mk)
  
@@ -549,520 +738,6 @@ index 2a280acce998383df101abc5f4e6c7d561b053c7..8065d0875a877fe8529481dbb26617be
  
 -BUILD_FINGERPRINT := Huawei/MOZART/hi3635:6.0/MRA58K/huawei11291304:user/test-keys
 +BUILD_FINGERPRINT := huawei/mozart/hi3635:9/$(MOZART_FINGERPRINT_ID)/$(MOZART_BUILD_NUMBER):user/release-keys
-diff --git a/rootdir/Android.mk b/rootdir/Android.mk
-index 2ae7f8135374ceb27db12dc30c08c2aa16a67591..c17586975e97e4b93330a24190e88117c200c5f2 100755
---- a/rootdir/Android.mk
-+++ b/rootdir/Android.mk
-@@ -8,7 +8,7 @@ LOCAL_PATH := $(call my-dir)
- 
- include $(CLEAR_VARS)
- LOCAL_MODULE       := fstab.hi3635
--LOCAL_MODULE_TAGS  := optional eng
-+LOCAL_MODULE_TAGS  := optional
- LOCAL_MODULE_CLASS := ETC
- LOCAL_SRC_FILES    := $(LOCAL_MODULE)
- LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
-@@ -16,7 +16,7 @@ include $(BUILD_PREBUILT)
- 
- include $(CLEAR_VARS)
- LOCAL_MODULE       := init.hi3635.chip.usb.rc
--LOCAL_MODULE_TAGS  := optional eng
-+LOCAL_MODULE_TAGS  := optional
- LOCAL_MODULE_CLASS := ETC
- LOCAL_SRC_FILES    := etc/init.hi3635.chip.usb.rc
- LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
-@@ -24,7 +24,7 @@ include $(BUILD_PREBUILT)
- 
- include $(CLEAR_VARS)
- LOCAL_MODULE       := init.hi3635.connectivity.rc
--LOCAL_MODULE_TAGS  := optional eng
-+LOCAL_MODULE_TAGS  := optional
- LOCAL_MODULE_CLASS := ETC
- LOCAL_SRC_FILES    := etc/init.hi3635.connectivity.rc
- LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
-@@ -32,7 +32,7 @@ include $(BUILD_PREBUILT)
- 
- include $(CLEAR_VARS)
- LOCAL_MODULE       := init.hi3635.gps.rc
--LOCAL_MODULE_TAGS  := optional eng
-+LOCAL_MODULE_TAGS  := optional
- LOCAL_MODULE_CLASS := ETC
- LOCAL_SRC_FILES    := etc/init.hi3635.gps.rc
- LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
-@@ -40,7 +40,7 @@ include $(BUILD_PREBUILT)
- 
- include $(CLEAR_VARS)
- LOCAL_MODULE       := init.hi3635.power.rc
--LOCAL_MODULE_TAGS  := optional eng
-+LOCAL_MODULE_TAGS  := optional
- LOCAL_MODULE_CLASS := ETC
- LOCAL_SRC_FILES    := etc/init.hi3635.power.rc
- LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
-@@ -48,7 +48,7 @@ include $(BUILD_PREBUILT)
- 
- include $(CLEAR_VARS)
- LOCAL_MODULE       := init.hi3635.rc
--LOCAL_MODULE_TAGS  := optional eng
-+LOCAL_MODULE_TAGS  := optional
- LOCAL_MODULE_CLASS := ETC
- LOCAL_SRC_FILES    := etc/init.hi3635.rc
- LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
-@@ -56,7 +56,7 @@ include $(BUILD_PREBUILT)
- 
- include $(CLEAR_VARS)
- LOCAL_MODULE       := init.hi3635.usb.rc
--LOCAL_MODULE_TAGS  := optional eng
-+LOCAL_MODULE_TAGS  := optional
- LOCAL_MODULE_CLASS := ETC
- LOCAL_SRC_FILES    := etc/init.hi3635.usb.rc
- LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
-@@ -64,7 +64,7 @@ include $(BUILD_PREBUILT)
- 
- include $(CLEAR_VARS)
- LOCAL_MODULE       := ueventd.hi3635.rc
--LOCAL_MODULE_TAGS  := optional eng
-+LOCAL_MODULE_TAGS  := optional
- LOCAL_MODULE_CLASS := ETC
- LOCAL_SRC_FILES    := etc/ueventd.hi3635.rc
- LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
-@@ -72,24 +72,27 @@ include $(BUILD_PREBUILT)
- 
- include $(CLEAR_VARS)
- LOCAL_MODULE       := hw_healthd
--LOCAL_MODULE_TAGS  := optional eng
--LOCAL_MODULE_CLASS := ETC
-+LOCAL_MODULE_TAGS  := optional
-+LOCAL_MODULE_CLASS := EXECUTABLES
-+LOCAL_MODULE_SUFFIX :=
- LOCAL_SRC_FILES    := sbin/hw_healthd
- LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)/sbin
- include $(BUILD_PREBUILT)
- 
- include $(CLEAR_VARS)
- LOCAL_MODULE       := oeminfo_nvm_server
--LOCAL_MODULE_TAGS  := optional eng
--LOCAL_MODULE_CLASS := ETC
-+LOCAL_MODULE_TAGS  := optional
-+LOCAL_MODULE_CLASS := EXECUTABLES
-+LOCAL_MODULE_SUFFIX :=
- LOCAL_SRC_FILES    := sbin/oeminfo_nvm_server
- LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)/sbin
- include $(BUILD_PREBUILT)
- 
- include $(CLEAR_VARS)
- LOCAL_MODULE       := teecd
--LOCAL_MODULE_TAGS  := optional eng
--LOCAL_MODULE_CLASS := ETC
-+LOCAL_MODULE_TAGS  := optional
-+LOCAL_MODULE_CLASS := EXECUTABLES
-+LOCAL_MODULE_SUFFIX :=
- LOCAL_SRC_FILES    := sbin/teecd
- LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)/sbin
- include $(BUILD_PREBUILT)
-diff --git a/rootdir/etc/init.hi3635.chip.usb.rc b/rootdir/etc/init.hi3635.chip.usb.rc
-index 09be25d7108d209bd1f12fc4d9611b3d74c31c25..4426ff237f0ff74be79d86e25588d3da9f0ebace 100755
---- a/rootdir/etc/init.hi3635.chip.usb.rc
-+++ b/rootdir/etc/init.hi3635.chip.usb.rc
-@@ -3,7 +3,7 @@ on property:sys.usb.config=hisi_debug,adb
-     write /sys/class/android_usb/android0/enable 0
-     write /sys/class/android_usb/android0/idVendor 12d1
-     write /sys/class/android_usb/android0/idProduct 1057
--    write /sys/class/android_usb/android0/iSerial $ro.serialno
-+    write /sys/class/android_usb/android0/iSerial ${ro.serialno}
-     write /sys/class/android_usb/android0/portNum  0000
-     write /sys/class/android_usb/android0/f_rndis/wceis  1
-     write /sys/class/android_usb/android0/functions rndis,adb,balong_acm
-@@ -12,5 +12,4 @@ on property:sys.usb.config=hisi_debug,adb
-     start hw_cdma_service
-     start adbd
-     start usbshell
--    setprop sys.usb.state $sys.usb.config
--
-+    setprop sys.usb.state ${sys.usb.config}
-diff --git a/rootdir/etc/init.hi3635.power.rc b/rootdir/etc/init.hi3635.power.rc
-index 9dce05fb44305f2b4341e958070976e10482ee06..4d3aaa848659aab415efc4fc1b0856b414170a14 100755
---- a/rootdir/etc/init.hi3635.power.rc
-+++ b/rootdir/etc/init.hi3635.power.rc
-@@ -50,9 +50,6 @@ on enable-low-power
-     write /sys/devices/system/cpu/cpu6/online 1
-     write /sys/devices/system/cpu/cpu7/online 1
- 
--on class_start:late_start
--    trigger enable-low-power
--
- on property:init.svc.recovery=running
-     trigger enable-low-power
- 
-diff --git a/rootdir/etc/init.hi3635.rc b/rootdir/etc/init.hi3635.rc
-index 3e7736029ab83b9c2bd82d307f4c99d49b6c5e39..d5952ed3278e15c0a529014c4db147ca6a3b676c 100755
---- a/rootdir/etc/init.hi3635.rc
-+++ b/rootdir/etc/init.hi3635.rc
-@@ -355,6 +355,10 @@ on fs
-     chown radio radio sys/devices/platform/balong_power/state
- 
- on post-fs
-+    # WebView child zygote keeps trace_marker open across fork.
-+    chmod 0222 /sys/kernel/debug/tracing/trace_marker
-+    chmod 0222 /sys/kernel/tracing/trace_marker
-+
-     mkdir /splash2/sim 0775 root system
-     mkdir /splash2/sim/offlinelogs 0775 root system
-     write /splash2/sim/offlinelogs/balong_modem1_simoffline.txt  0
-@@ -401,6 +405,11 @@ on post-fs
-     chmod 0440 /dev/log/radio_boot
- 
- on post-fs-data
-+    # The legacy fstab path does not emit Android's nonencrypted trigger,
-+    # so start installd and explicitly release the framework classes.
-+    start installd
-+    setprop vold.decrypt trigger_restart_framework
-+
-     mkdir /data/offlinelogs 770
- 
-     mkdir /data/nvram/ 0770 root nvram
-@@ -577,6 +586,10 @@ on boot
-     write /sys/devices/platform/antennafpga.0/ice40bin_download_dir "start"
-     chown system system /sys/devices/platform/antennafpga.0/ice40bin_scan_fpga_table
- 
-+    # debugfs/tracing permissions can be reset during early boot.
-+    chmod 0222 /sys/kernel/debug/tracing/trace_marker
-+    chmod 0222 /sys/kernel/tracing/trace_marker
-+
-     write /sys/kernel/debug/kmemleak scan=14400
- 
-     chown system system /sys/class/leds/lcd_backlight0/brightness
-@@ -645,14 +658,39 @@ on boot
-     chown system system /sys/devices/platform/huawei_tp_color/tp_color_info
-     chown system system /sys/touchscreen/tp_capacitance_test_type
-     chown system system /sys/class/leds/red/brightness
-+    chmod 664 /sys/class/leds/red/brightness
-     chown system system /sys/class/leds/red/delay_off
-+    chmod 664 /sys/class/leds/red/delay_off
-     chown system system /sys/class/leds/red/delay_on
-+    chmod 664 /sys/class/leds/red/delay_on
-     chown system system /sys/class/leds/green/brightness
-+    chmod 664 /sys/class/leds/green/brightness
-     chown system system /sys/class/leds/green/delay_off
-+    chmod 664 /sys/class/leds/green/delay_off
-     chown system system /sys/class/leds/green/delay_on
-+    chmod 664 /sys/class/leds/green/delay_on
-     chown system system /sys/class/leds/blue/brightness
-+    chmod 664 /sys/class/leds/blue/brightness
-     chown system system /sys/class/leds/blue/delay_off
-+    chmod 664 /sys/class/leds/blue/delay_off
-     chown system system /sys/class/leds/blue/delay_on
-+    chmod 664 /sys/class/leds/blue/delay_on
-+    chown system system /sys/class/leds/amber/brightness
-+    chmod 664 /sys/class/leds/amber/brightness
-+    chown system system /sys/class/leds/amber/blink
-+    chmod 664 /sys/class/leds/amber/blink
-+    chown system system /sys/class/leds/red/device/blink
-+    chmod 664 /sys/class/leds/red/device/blink
-+    chown system system /sys/class/leds/red/device/grppwm
-+    chmod 664 /sys/class/leds/red/device/grppwm
-+    chown system system /sys/class/leds/red/device/grpfreq
-+    chmod 664 /sys/class/leds/red/device/grpfreq
-+    chown system system /sys/class/leds/button-backlight/brightness
-+    chmod 664 /sys/class/leds/button-backlight/brightness
-+    chown system system /sys/class/leds/keyboard-backlight/brightness
-+    chmod 664 /sys/class/leds/keyboard-backlight/brightness
-+    chown system system /sys/class/leds/jogball-backlight/brightness
-+    chmod 664 /sys/class/leds/jogball-backlight/brightness
-     chown system system /sys/class/timed_output/vibrator/vibrator_dbc_test
-     chown system system /sys/class/timed_output/vibrator/vibrator_calib
-     chown system system /sys/class/timed_output/vibrator/vibrator_get_reg
-diff --git a/rootdir/etc/init.hi3635.usb.rc b/rootdir/etc/init.hi3635.usb.rc
-index 463d983e26b1c0a36c20b213a16a71add6868fac..cc74385b4ec88f69aba6a46dfa8c65fd1a03503a 100755
---- a/rootdir/etc/init.hi3635.usb.rc
-+++ b/rootdir/etc/init.hi3635.usb.rc
-@@ -161,7 +161,7 @@ on property:sys.usb.config=accessory,adb
-     write /sys/class/android_usb/android0/functions ${sys.usb.config}
-     write /sys/class/android_usb/android0/enable 1
-     start adbd
--    setprop sys.usb.state $sys.usb.config
-+    setprop sys.usb.state ${sys.usb.config}
- 
- on property:sys.usb.config=mass_storage
-     write /sys/class/android_usb/android0/enable 0
-@@ -296,7 +296,7 @@ on property:sys.usb.config=pcmodem1
-     write /sys/class/android_usb/android0/functions mass_storage
-     write /sys/devices/virtual/android_usb/android0/port_mode 16
-     write /sys/class/android_usb/android0/enable 1
--    setprop sys.usb.state $sys.usb.config
-+    setprop sys.usb.state ${sys.usb.config}
- 
- on property:sys.usb.config=pcmodem2
-     write /sys/class/android_usb/android0/enable 0
-diff --git a/sepolicy/file_contexts b/sepolicy/file_contexts
-index 83ec16447abfc36baa9d455204371c1467266217..6c5ccdd1fc78c8152cb38cf45dcc5d4bda56f8c2 100644
---- a/sepolicy/file_contexts
-+++ b/sepolicy/file_contexts
-@@ -1,4 +1,50 @@
--# File contexts
-+# Device nodes
-+/dev/oinv						u:object_r:mozart_oeminfo_device_dir:s0
-+/dev/anc_hs						u:object_r:audio_device:s0
-+/dev/ear_pa						u:object_r:audio_device:s0
-+/dev/hifi_misc						u:object_r:audio_device:s0
-+/dev/hi6402_hifi_misc					u:object_r:audio_device:s0
-+/dev/hwbt						u:object_r:hci_attach_dev:s0
-+/dev/hwlog_jank						u:object_r:mozart_hwlog_device:s0
-+/dev/block/mmcblk0p13					u:object_r:mozart_fsck_block_device:s0
-+/dev/block/mmcblk0p14					u:object_r:mozart_fsck_block_device:s0
-+/dev/block/mmcblk0p15					u:object_r:mozart_fsck_block_device:s0
-+/dev/block/mmcblk0p33					u:object_r:mozart_fsck_block_device:s0
-+/dev/block/mmcblk0p34					u:object_r:cache_block_device:s0
-+/dev/block/mmcblk0p35					u:object_r:mozart_hisitest_block_device:s0
-+/dev/block/mmcblk0p36					u:object_r:mozart_hisitest_block_device:s0
-+/dev/block/mmcblk0p37					u:object_r:mozart_hisitest_block_device:s0
-+/dev/block/mmcblk0p38					u:object_r:system_block_device:s0
-+/dev/block/mmcblk0p39					u:object_r:mozart_fsck_block_device:s0
-+/dev/block/mmcblk0p40					u:object_r:userdata_block_device:s0
-+/dev/imgsysbrg_vdec[0-9]*				u:object_r:video_device:s0
-+/dev/jpu						u:object_r:video_device:s0
-+/dev/mali0						u:object_r:gpu_device:s0
-+/dev/maxim_smartpa_dev					u:object_r:audio_device:s0
-+/dev/nve0						u:object_r:mozart_nve_device:s0
-+/dev/sensorhub						u:object_r:sensors_device:s0
-+/dev/speakerID						u:object_r:audio_device:s0
-+/dev/tc_ns_client					u:object_r:tee_device:s0
-+/dev/tfa9895						u:object_r:audio_device:s0
-+/dev/ttyAMA4						u:object_r:hci_attach_dev:s0
-+
-+# Data files
-+/mnvm2:0(/.*)?						u:object_r:modem_nv_file:s0
-+/modem_log(/.*)?					u:object_r:modem_log_file:s0
-+/splash2(/.*)?						u:object_r:splash2_data_file:s0
-+/data/gps(/.*)?						u:object_r:mozart_gps_data_file:s0
-+/data/light						u:object_r:mozart_sensors_data_file:s0
-+
-+# Executables
-+/sbin/oeminfo_nvm_server				u:object_r:oeminfo_nvm_exec:s0
-+/sbin/teecd						u:object_r:tee_exec:s0
- /system/bin/glgps4752					u:object_r:gpsd_exec:s0
- /system/bin/gpsdaemon					u:object_r:gpsdaemon_exec:s0
-+/system/vendor/bin/mac_addr_normalization		u:object_r:mac_addr_normalization_exec:s0
-+/system/vendor/bin/mac_addr_normalization_vendor	u:object_r:mac_addr_normalization_vendor_exec:s0
- /vendor/bin/mac_addr_normalization			u:object_r:mac_addr_normalization_exec:s0
-+/vendor/bin/mac_addr_normalization_vendor		u:object_r:mac_addr_normalization_vendor_exec:s0
-+
-+# Sockets
-+/dev/socket/oeminfo_nvm					u:object_r:mozart_oeminfo_socket:s0
-+/dev/socket/tee-multi-user				u:object_r:mozart_tee_socket:s0
-diff --git a/sepolicy/gpsd.te b/sepolicy/gpsd.te
-index 9aeb178b8d6ab8dd5ce98662c1d29f3d8eb2b45c..ebe19076a77b035abe8c81b27e8dc2ed528440b9 100644
---- a/sepolicy/gpsd.te
-+++ b/sepolicy/gpsd.te
-@@ -1,6 +1,13 @@
- # gpsd_4752 daemon
- type gpsd, domain;
--type gpsd_exec, exec_type, file_type;
-+type gpsd_exec, exec_type, file_type, system_file_type;
- 
- # Started by init
- init_daemon_domain(gpsd)
-+
-+allow domain gpsd_exec:file getattr;
-+
-+allow gpsd self:netlink_kobject_uevent_socket create_socket_perms_no_ioctl;
-+allow gpsd mozart_gps_data_file:dir r_dir_perms;
-+allow gpsd mozart_gps_data_file:file r_file_perms;
-+allow gpsd mozart_gps_data_file:fifo_file create_file_perms;
-diff --git a/sepolicy/gpsdaemon.te b/sepolicy/gpsdaemon.te
-index a07702d8584f731b2e111ad53933c241242de326..dc36735ac5a174fe1e37c8b26ace7ea4e665361f 100644
---- a/sepolicy/gpsdaemon.te
-+++ b/sepolicy/gpsdaemon.te
-@@ -1,6 +1,11 @@
- # gpsdaemon daemon
- type gpsdaemon, domain;
--type gpsdaemon_exec, exec_type, file_type;
-+type gpsdaemon_exec, exec_type, file_type, system_file_type;
- 
- # Started by init
- init_daemon_domain(gpsdaemon)
-+
-+allow gpsdaemon mozart_gps_data_file:dir rw_dir_perms;
-+allow gpsdaemon mozart_gps_data_file:file create_file_perms;
-+allow gpsdaemon mozart_gps_data_file:fifo_file create_file_perms;
-+allow gpsdaemon shell_exec:file rx_file_perms;
-diff --git a/sepolicy/mac_addr_normalization.te b/sepolicy/mac_addr_normalization.te
-index e800118298a0ecd5fad7b316441945613403138d..53a119a135d8d4cf93028e8a53ec845a07039c5f 100644
---- a/sepolicy/mac_addr_normalization.te
-+++ b/sepolicy/mac_addr_normalization.te
-@@ -1,6 +1,22 @@
- # mac_addr_normalization daemon
- type mac_addr_normalization, domain;
--type mac_addr_normalization_exec, exec_type, file_type, vendor_file_type;
-+type mac_addr_normalization_exec, exec_type, file_type, system_file_type, vendor_file_type;
-+type mac_addr_normalization_vendor_exec, exec_type, file_type, system_file_type, vendor_file_type;
- 
- # Started by init
- init_daemon_domain(mac_addr_normalization)
-+
-+# Preserve Huawei's NVM lookup before using the persistent local fallback.
-+allow mac_addr_normalization mac_addr_normalization_vendor_exec:file rx_file_perms;
-+allow mac_addr_normalization mozart_oeminfo_device_dir:dir rw_dir_perms;
-+allow mac_addr_normalization mozart_oeminfo_device_dir:sock_file create_file_perms;
-+allow mac_addr_normalization mozart_oeminfo_socket:sock_file write;
-+allow mac_addr_normalization oeminfo_nvm:unix_dgram_socket sendto;
-+get_prop(mac_addr_normalization, exported_bluetooth_prop)
-+
-+# Some mozart variants ship without MACBT/MACWLAN NVM records.
-+allow mac_addr_normalization self:capability chown;
-+allow mac_addr_normalization bluetooth_data_file:dir rw_dir_perms;
-+allow mac_addr_normalization bluetooth_data_file:file create_file_perms;
-+allow mac_addr_normalization wifi_data_file:dir rw_dir_perms;
-+allow mac_addr_normalization wifi_data_file:file create_file_perms;
-diff --git a/sepolicy/oeminfo_nvm.te b/sepolicy/oeminfo_nvm.te
-index 069711126c093471918e0f1a709dbccd2ae5917b..fd15c04cfc09894e2c46fac5c20eaf46ced75832 100644
---- a/sepolicy/oeminfo_nvm.te
-+++ b/sepolicy/oeminfo_nvm.te
-@@ -4,3 +4,19 @@ type oeminfo_nvm_exec, exec_type, file_type;
- 
- # Started by init
- init_daemon_domain(oeminfo_nvm)
-+
-+# /sbin lives on rootfs during early boot; oeminfo_nvm starts before these
-+# ramdisk files can be relabeled to their *_exec context.
-+allow oeminfo_nvm rootfs:file { getattr open read execute map entrypoint };
-+
-+allow oeminfo_nvm properties_device:dir r_dir_perms;
-+
-+# oeminfo_nvm creates its own /dev/socket/oeminfo_nvm endpoint instead of
-+# declaring an init-managed socket.
-+allow oeminfo_nvm device:dir { getattr search write add_name };
-+allow oeminfo_nvm mozart_oeminfo_device_dir:dir create_dir_perms;
-+allow oeminfo_nvm socket_device:dir rw_dir_perms;
-+allow oeminfo_nvm mozart_oeminfo_socket:sock_file create_file_perms;
-+allow oeminfo_nvm self:capability { chown fsetid };
-+type_transition oeminfo_nvm device:dir mozart_oeminfo_device_dir "oinv";
-+type_transition oeminfo_nvm socket_device:sock_file mozart_oeminfo_socket "oeminfo_nvm";
-diff --git a/vendorsetup.sh b/vendorsetup.sh
-index 9cda2f1ff6be0e3ad4e2113e2792021d1ead4fcb..88d5a1711002e5c766c385e119f9b4caefabd193 100644
---- a/vendorsetup.sh
-+++ b/vendorsetup.sh
-@@ -3,5 +3,3 @@
- #
- # SPDX-License-Identifier: Apache-2.0
- #
--
--add_lunch_combo lineage_mozart-userdebug
-diff --git a/vintf/manifest.xml b/vintf/manifest.xml
-index 7746722730a802b85fb2439745ee8fc5a7b949aa..d0d058a52f31ff9a0d12f7ff5cc7d4989f6f4a16 100644
---- a/vintf/manifest.xml
-+++ b/vintf/manifest.xml
-@@ -26,15 +26,6 @@
-             <instance>default</instance>
-         </interface>
-     </hal>
--    <hal format="hidl">
--        <name>android.hardware.cas</name>
--        <transport>hwbinder</transport>
--        <version>1.0</version>
--        <interface>
--            <name>IMediaCasService</name>
--            <instance>default</instance>
--        </interface>
--    </hal>
-     <hal format="hidl">
-         <name>android.hardware.configstore</name>
-         <transport>hwbinder</transport>
-@@ -173,15 +164,6 @@
-             <instance>default</instance>
-         </interface>
-     </hal>
--    <hal format="hidl">
--        <name>android.hardware.usb</name>
--        <transport>hwbinder</transport>
--        <version>1.0</version>
--        <interface>
--            <name>IUsb</name>
--            <instance>default</instance>
--        </interface>
--    </hal>
-     <hal format="hidl">
-         <name>android.hardware.vibrator</name>
-         <transport>hwbinder</transport>
-@@ -191,34 +173,4 @@
-             <instance>default</instance>
-         </interface>
-     </hal>
--    <hal format="hidl">
--        <name>android.hardware.wifi</name>
--        <transport>hwbinder</transport>
--        <version>1.2</version>
--        <interface>
--            <name>IWifi</name>
--            <instance>default</instance>
--        </interface>
--    </hal>
--    <hal format="hidl">
--        <name>android.hardware.wifi.hostapd</name>
--        <transport>hwbinder</transport>
--        <version>1.0</version>
--        <interface>
--            <name>IHostapd</name>
--            <instance>default</instance>
--        </interface>
--    </hal>
--    <hal format="hidl">
--        <name>android.hardware.wifi.supplicant</name>
--        <transport>hwbinder</transport>
--        <version>1.1</version>
--        <interface>
--            <name>ISupplicant</name>
--            <instance>default</instance>
--        </interface>
--    </hal>
--    <sepolicy>
--        <version>27.0</version>
--    </sepolicy>
- </manifest>
-diff --git a/config.fs b/config.fs
-new file mode 100644
-index 0000000000000000000000000000000000000000..387da9ab017a348ba3a5820f5f101f782a138c5a
---- /dev/null
-+++ b/config.fs
-@@ -0,0 +1,20 @@
-+# Executables installed directly under the system-as-root /sbin directory are
-+# not covered by Android's default /system/bin executable mode rules.
-+
-+[sbin/hw_healthd]
-+mode: 0755
-+user: AID_ROOT
-+group: AID_ROOT
-+caps: 0
-+
-+[sbin/oeminfo_nvm_server]
-+mode: 0755
-+user: AID_ROOT
-+group: AID_ROOT
-+caps: 0
-+
-+[sbin/teecd]
-+mode: 0755
-+user: AID_ROOT
-+group: AID_ROOT
-+caps: 0
-diff --git a/libinit/Android.bp b/libinit/Android.bp
-new file mode 100644
-index 0000000000000000000000000000000000000000..c5ea7eb6a2e509ca21e144292f781814e0955c29
---- /dev/null
-+++ b/libinit/Android.bp
-@@ -0,0 +1,13 @@
-+//
-+// Copyright (C) 2025 The LineageOS Project
-+//
-+// SPDX-License-Identifier: Apache-2.0
-+//
-+
-+cc_library_static {
-+    name: "libinit_huawei_hi3635",
-+    recovery_available: true,
-+    srcs: ["init_huawei_hi3635.cpp"],
-+    include_dirs: ["system/core/init"],
-+    shared_libs: ["libbase"],
-+}
 diff --git a/macaddr/Android.mk b/macaddr/Android.mk
 new file mode 100644
 index 0000000000000000000000000000000000000000..47e66e201eda7537e6b4ce147f34a18a5c616031
@@ -1344,6 +1019,265 @@ index 0000000000000000000000000000000000000000..d01fe134743dd896d482bf01d48e8cc4
 +    const bool wifi_ok = EnsureMac(kWifiPath, kSystemUid, kWifiGid);
 +    return bluetooth_ok && wifi_ok ? 0 : 1;
 +}
+diff --git a/overlay/frameworks/base/core/res/res/values/config.xml b/overlay/frameworks/base/core/res/res/values/config.xml
+index 7819a89dc5787988783f07ae2d3789bc090c6a7e..a08f3bd5a92c4da81ad2d809755137d986841d08 100644
+--- a/overlay/frameworks/base/core/res/res/values/config.xml
++++ b/overlay/frameworks/base/core/res/res/values/config.xml
+@@ -127,9 +127,6 @@
+     <!-- Permit doze mode to operate -->
+     <bool name="config_enableAutoPowerModes">true</bool>
+ 
+-    <!-- If this is true, the screen will fade off. -->
+-    <bool name="config_animateScreenLights">true</bool>
+-
+     <!-- Whether a software navigation bar should be shown. NOTE: in the future this may be
+          autodetected from the Configuration. -->
+     <bool name="config_showNavigationBar">true</bool>
+
+diff --git a/rootdir/Android.mk b/rootdir/Android.mk
+index 2ae7f8135374ceb27db12dc30c08c2aa16a67591..c17586975e97e4b93330a24190e88117c200c5f2 100755
+--- a/rootdir/Android.mk
++++ b/rootdir/Android.mk
+@@ -8,7 +8,7 @@ LOCAL_PATH := $(call my-dir)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE       := fstab.hi3635
+-LOCAL_MODULE_TAGS  := optional eng
++LOCAL_MODULE_TAGS  := optional
+ LOCAL_MODULE_CLASS := ETC
+ LOCAL_SRC_FILES    := $(LOCAL_MODULE)
+ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
+@@ -16,7 +16,7 @@ include $(BUILD_PREBUILT)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE       := init.hi3635.chip.usb.rc
+-LOCAL_MODULE_TAGS  := optional eng
++LOCAL_MODULE_TAGS  := optional
+ LOCAL_MODULE_CLASS := ETC
+ LOCAL_SRC_FILES    := etc/init.hi3635.chip.usb.rc
+ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
+@@ -24,7 +24,7 @@ include $(BUILD_PREBUILT)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE       := init.hi3635.connectivity.rc
+-LOCAL_MODULE_TAGS  := optional eng
++LOCAL_MODULE_TAGS  := optional
+ LOCAL_MODULE_CLASS := ETC
+ LOCAL_SRC_FILES    := etc/init.hi3635.connectivity.rc
+ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
+@@ -32,7 +32,7 @@ include $(BUILD_PREBUILT)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE       := init.hi3635.gps.rc
+-LOCAL_MODULE_TAGS  := optional eng
++LOCAL_MODULE_TAGS  := optional
+ LOCAL_MODULE_CLASS := ETC
+ LOCAL_SRC_FILES    := etc/init.hi3635.gps.rc
+ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
+@@ -40,7 +40,7 @@ include $(BUILD_PREBUILT)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE       := init.hi3635.power.rc
+-LOCAL_MODULE_TAGS  := optional eng
++LOCAL_MODULE_TAGS  := optional
+ LOCAL_MODULE_CLASS := ETC
+ LOCAL_SRC_FILES    := etc/init.hi3635.power.rc
+ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
+@@ -48,7 +48,7 @@ include $(BUILD_PREBUILT)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE       := init.hi3635.rc
+-LOCAL_MODULE_TAGS  := optional eng
++LOCAL_MODULE_TAGS  := optional
+ LOCAL_MODULE_CLASS := ETC
+ LOCAL_SRC_FILES    := etc/init.hi3635.rc
+ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
+@@ -56,7 +56,7 @@ include $(BUILD_PREBUILT)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE       := init.hi3635.usb.rc
+-LOCAL_MODULE_TAGS  := optional eng
++LOCAL_MODULE_TAGS  := optional
+ LOCAL_MODULE_CLASS := ETC
+ LOCAL_SRC_FILES    := etc/init.hi3635.usb.rc
+ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
+@@ -64,7 +64,7 @@ include $(BUILD_PREBUILT)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE       := ueventd.hi3635.rc
+-LOCAL_MODULE_TAGS  := optional eng
++LOCAL_MODULE_TAGS  := optional
+ LOCAL_MODULE_CLASS := ETC
+ LOCAL_SRC_FILES    := etc/ueventd.hi3635.rc
+ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
+@@ -72,24 +72,27 @@ include $(BUILD_PREBUILT)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE       := hw_healthd
+-LOCAL_MODULE_TAGS  := optional eng
+-LOCAL_MODULE_CLASS := ETC
++LOCAL_MODULE_TAGS  := optional
++LOCAL_MODULE_CLASS := EXECUTABLES
++LOCAL_MODULE_SUFFIX :=
+ LOCAL_SRC_FILES    := sbin/hw_healthd
+ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)/sbin
+ include $(BUILD_PREBUILT)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE       := oeminfo_nvm_server
+-LOCAL_MODULE_TAGS  := optional eng
+-LOCAL_MODULE_CLASS := ETC
++LOCAL_MODULE_TAGS  := optional
++LOCAL_MODULE_CLASS := EXECUTABLES
++LOCAL_MODULE_SUFFIX :=
+ LOCAL_SRC_FILES    := sbin/oeminfo_nvm_server
+ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)/sbin
+ include $(BUILD_PREBUILT)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE       := teecd
+-LOCAL_MODULE_TAGS  := optional eng
+-LOCAL_MODULE_CLASS := ETC
++LOCAL_MODULE_TAGS  := optional
++LOCAL_MODULE_CLASS := EXECUTABLES
++LOCAL_MODULE_SUFFIX :=
+ LOCAL_SRC_FILES    := sbin/teecd
+ LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)/sbin
+ include $(BUILD_PREBUILT)
+diff --git a/rootdir/etc/init.hi3635.chip.usb.rc b/rootdir/etc/init.hi3635.chip.usb.rc
+index 09be25d7108d209bd1f12fc4d9611b3d74c31c25..4426ff237f0ff74be79d86e25588d3da9f0ebace 100755
+--- a/rootdir/etc/init.hi3635.chip.usb.rc
++++ b/rootdir/etc/init.hi3635.chip.usb.rc
+@@ -3,7 +3,7 @@ on property:sys.usb.config=hisi_debug,adb
+     write /sys/class/android_usb/android0/enable 0
+     write /sys/class/android_usb/android0/idVendor 12d1
+     write /sys/class/android_usb/android0/idProduct 1057
+-    write /sys/class/android_usb/android0/iSerial $ro.serialno
++    write /sys/class/android_usb/android0/iSerial ${ro.serialno}
+     write /sys/class/android_usb/android0/portNum  0000
+     write /sys/class/android_usb/android0/f_rndis/wceis  1
+     write /sys/class/android_usb/android0/functions rndis,adb,balong_acm
+@@ -12,5 +12,4 @@ on property:sys.usb.config=hisi_debug,adb
+     start hw_cdma_service
+     start adbd
+     start usbshell
+-    setprop sys.usb.state $sys.usb.config
+-
++    setprop sys.usb.state ${sys.usb.config}
+diff --git a/rootdir/etc/init.hi3635.power.rc b/rootdir/etc/init.hi3635.power.rc
+index 9dce05fb44305f2b4341e958070976e10482ee06..4d3aaa848659aab415efc4fc1b0856b414170a14 100755
+--- a/rootdir/etc/init.hi3635.power.rc
++++ b/rootdir/etc/init.hi3635.power.rc
+@@ -50,9 +50,6 @@ on enable-low-power
+     write /sys/devices/system/cpu/cpu6/online 1
+     write /sys/devices/system/cpu/cpu7/online 1
+ 
+-on class_start:late_start
+-    trigger enable-low-power
+-
+ on property:init.svc.recovery=running
+     trigger enable-low-power
+ 
+diff --git a/rootdir/etc/init.hi3635.rc b/rootdir/etc/init.hi3635.rc
+index 3e7736029ab83b9c2bd82d307f4c99d49b6c5e39..d5952ed3278e15c0a529014c4db147ca6a3b676c 100755
+--- a/rootdir/etc/init.hi3635.rc
++++ b/rootdir/etc/init.hi3635.rc
+@@ -355,6 +355,10 @@ on fs
+     chown radio radio sys/devices/platform/balong_power/state
+ 
+ on post-fs
++    # WebView child zygote keeps trace_marker open across fork.
++    chmod 0222 /sys/kernel/debug/tracing/trace_marker
++    chmod 0222 /sys/kernel/tracing/trace_marker
++
+     mkdir /splash2/sim 0775 root system
+     mkdir /splash2/sim/offlinelogs 0775 root system
+     write /splash2/sim/offlinelogs/balong_modem1_simoffline.txt  0
+@@ -401,6 +405,11 @@ on post-fs
+     chmod 0440 /dev/log/radio_boot
+ 
+ on post-fs-data
++    # The legacy fstab path does not emit Android's nonencrypted trigger,
++    # so start installd and explicitly release the framework classes.
++    start installd
++    setprop vold.decrypt trigger_restart_framework
++
+     mkdir /data/offlinelogs 770
+ 
+     mkdir /data/nvram/ 0770 root nvram
+@@ -577,6 +586,10 @@ on boot
+     write /sys/devices/platform/antennafpga.0/ice40bin_download_dir "start"
+     chown system system /sys/devices/platform/antennafpga.0/ice40bin_scan_fpga_table
+ 
++    # debugfs/tracing permissions can be reset during early boot.
++    chmod 0222 /sys/kernel/debug/tracing/trace_marker
++    chmod 0222 /sys/kernel/tracing/trace_marker
++
+     write /sys/kernel/debug/kmemleak scan=14400
+ 
+     chown system system /sys/class/leds/lcd_backlight0/brightness
+@@ -645,14 +658,39 @@ on boot
+     chown system system /sys/devices/platform/huawei_tp_color/tp_color_info
+     chown system system /sys/touchscreen/tp_capacitance_test_type
+     chown system system /sys/class/leds/red/brightness
++    chmod 664 /sys/class/leds/red/brightness
+     chown system system /sys/class/leds/red/delay_off
++    chmod 664 /sys/class/leds/red/delay_off
+     chown system system /sys/class/leds/red/delay_on
++    chmod 664 /sys/class/leds/red/delay_on
+     chown system system /sys/class/leds/green/brightness
++    chmod 664 /sys/class/leds/green/brightness
+     chown system system /sys/class/leds/green/delay_off
++    chmod 664 /sys/class/leds/green/delay_off
+     chown system system /sys/class/leds/green/delay_on
++    chmod 664 /sys/class/leds/green/delay_on
+     chown system system /sys/class/leds/blue/brightness
++    chmod 664 /sys/class/leds/blue/brightness
+     chown system system /sys/class/leds/blue/delay_off
++    chmod 664 /sys/class/leds/blue/delay_off
+     chown system system /sys/class/leds/blue/delay_on
++    chmod 664 /sys/class/leds/blue/delay_on
++    chown system system /sys/class/leds/amber/brightness
++    chmod 664 /sys/class/leds/amber/brightness
++    chown system system /sys/class/leds/amber/blink
++    chmod 664 /sys/class/leds/amber/blink
++    chown system system /sys/class/leds/red/device/blink
++    chmod 664 /sys/class/leds/red/device/blink
++    chown system system /sys/class/leds/red/device/grppwm
++    chmod 664 /sys/class/leds/red/device/grppwm
++    chown system system /sys/class/leds/red/device/grpfreq
++    chmod 664 /sys/class/leds/red/device/grpfreq
++    chown system system /sys/class/leds/button-backlight/brightness
++    chmod 664 /sys/class/leds/button-backlight/brightness
++    chown system system /sys/class/leds/keyboard-backlight/brightness
++    chmod 664 /sys/class/leds/keyboard-backlight/brightness
++    chown system system /sys/class/leds/jogball-backlight/brightness
++    chmod 664 /sys/class/leds/jogball-backlight/brightness
+     chown system system /sys/class/timed_output/vibrator/vibrator_dbc_test
+     chown system system /sys/class/timed_output/vibrator/vibrator_calib
+     chown system system /sys/class/timed_output/vibrator/vibrator_get_reg
+diff --git a/rootdir/etc/init.hi3635.usb.rc b/rootdir/etc/init.hi3635.usb.rc
+index 463d983e26b1c0a36c20b213a16a71add6868fac..cc74385b4ec88f69aba6a46dfa8c65fd1a03503a 100755
+--- a/rootdir/etc/init.hi3635.usb.rc
++++ b/rootdir/etc/init.hi3635.usb.rc
+@@ -161,7 +161,7 @@ on property:sys.usb.config=accessory,adb
+     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+     write /sys/class/android_usb/android0/enable 1
+     start adbd
+-    setprop sys.usb.state $sys.usb.config
++    setprop sys.usb.state ${sys.usb.config}
+ 
+ on property:sys.usb.config=mass_storage
+     write /sys/class/android_usb/android0/enable 0
+@@ -296,7 +296,7 @@ on property:sys.usb.config=pcmodem1
+     write /sys/class/android_usb/android0/functions mass_storage
+     write /sys/devices/virtual/android_usb/android0/port_mode 16
+     write /sys/class/android_usb/android0/enable 1
+-    setprop sys.usb.state $sys.usb.config
++    setprop sys.usb.state ${sys.usb.config}
+ 
+ on property:sys.usb.config=pcmodem2
+     write /sys/class/android_usb/android0/enable 0
 diff --git a/rootdir/fstab.hi3635.ramdisk b/rootdir/fstab.hi3635.ramdisk
 new file mode 100644
 index 0000000000000000000000000000000000000000..76feb51da2329946012b8ed95cfea7617f6abf2c
@@ -1353,6 +1287,66 @@ index 0000000000000000000000000000000000000000..76feb51da2329946012b8ed95cfea761
 +# Android first-stage fstab file.
 +#<src>                                                  <mnt_point>  <type>  <mnt_flags and options>  <fs_mgr_flags>
 +/dev/block/platform/hi_mci.0/by-name/system              /system      ext4    ro,barrier=1             wait,first_stage_mount
+diff --git a/sepolicy/file_contexts b/sepolicy/file_contexts
+index 83ec16447abfc36baa9d455204371c1467266217..046f719802ae80080632798954e6c23a68e47fb9 100644
+--- a/sepolicy/file_contexts
++++ b/sepolicy/file_contexts
+@@ -1,4 +1,54 @@
+-# File contexts
++# Device nodes
++/dev/oinv						u:object_r:mozart_oeminfo_device_dir:s0
++/dev/anc_hs						u:object_r:audio_device:s0
++/dev/ear_pa						u:object_r:audio_device:s0
++/dev/hifi_misc						u:object_r:audio_device:s0
++/dev/hi6402_hifi_misc					u:object_r:audio_device:s0
++/dev/hwbt						u:object_r:hci_attach_dev:s0
++/dev/hwlog_jank						u:object_r:mozart_hwlog_device:s0
++/dev/block/mmcblk0p13					u:object_r:mozart_fsck_block_device:s0
++/dev/block/mmcblk0p14					u:object_r:mozart_fsck_block_device:s0
++/dev/block/mmcblk0p15					u:object_r:mozart_fsck_block_device:s0
++/dev/block/mmcblk0p19					u:object_r:misc_block_device:s0
++/dev/block/mmcblk0p33					u:object_r:mozart_fsck_block_device:s0
++/dev/block/mmcblk0p34					u:object_r:cache_block_device:s0
++/dev/block/mmcblk0p35					u:object_r:mozart_hisitest_block_device:s0
++/dev/block/mmcblk0p36					u:object_r:mozart_hisitest_block_device:s0
++/dev/block/mmcblk0p37					u:object_r:mozart_hisitest_block_device:s0
++/dev/block/mmcblk0p38					u:object_r:system_block_device:s0
++/dev/block/mmcblk0p39					u:object_r:mozart_fsck_block_device:s0
++/dev/block/mmcblk0p40					u:object_r:userdata_block_device:s0
++/dev/block/zram0					u:object_r:swap_block_device:s0
++/dev/block/platform/hi_mci\.0/by-name/misc		u:object_r:misc_block_device:s0
++/dev/imgsysbrg_vdec[0-9]*				u:object_r:video_device:s0
++/dev/jpu						u:object_r:video_device:s0
++/dev/mali0						u:object_r:gpu_device:s0
++/dev/maxim_smartpa_dev					u:object_r:audio_device:s0
++/dev/nve0						u:object_r:mozart_nve_device:s0
++/dev/sensorhub						u:object_r:sensors_device:s0
++/dev/speakerID						u:object_r:audio_device:s0
++/dev/tc_ns_client					u:object_r:tee_device:s0
++/dev/tfa9895						u:object_r:audio_device:s0
++/dev/ttyAMA4						u:object_r:hci_attach_dev:s0
++
++# Data files
++/mnvm2:0(/.*)?						u:object_r:modem_nv_file:s0
++/modem_log(/.*)?					u:object_r:modem_log_file:s0
++/splash2(/.*)?						u:object_r:splash2_data_file:s0
++/data/gps(/.*)?						u:object_r:mozart_gps_data_file:s0
++/data/light						u:object_r:mozart_sensors_data_file:s0
++
++# Executables
++/sbin/oeminfo_nvm_server				u:object_r:oeminfo_nvm_exec:s0
++/sbin/teecd						u:object_r:tee_exec:s0
+ /system/bin/glgps4752					u:object_r:gpsd_exec:s0
+ /system/bin/gpsdaemon					u:object_r:gpsdaemon_exec:s0
++/system/vendor/bin/mac_addr_normalization		u:object_r:mac_addr_normalization_exec:s0
++/system/vendor/bin/mac_addr_normalization_vendor	u:object_r:mac_addr_normalization_vendor_exec:s0
+ /vendor/bin/mac_addr_normalization			u:object_r:mac_addr_normalization_exec:s0
++/vendor/bin/mac_addr_normalization_vendor		u:object_r:mac_addr_normalization_vendor_exec:s0
++
++# Sockets
++/dev/socket/gps						u:object_r:mozart_gps_socket:s0
++/dev/socket/oeminfo_nvm					u:object_r:mozart_oeminfo_socket:s0
++/dev/socket/tee-multi-user				u:object_r:mozart_tee_socket:s0
 diff --git a/sepolicy/fsck.te b/sepolicy/fsck.te
 new file mode 100644
 index 0000000000000000000000000000000000000000..c229a9a356fb880f1720055c17a957aeab750272
@@ -1362,10 +1356,10 @@ index 0000000000000000000000000000000000000000..c229a9a356fb880f1720055c17a957ae
 +allow fsck mozart_fsck_block_device:blk_file rw_file_perms;
 diff --git a/sepolicy/genfs_contexts b/sepolicy/genfs_contexts
 new file mode 100644
-index 0000000000000000000000000000000000000000..2d958893137df17ac8f47f760d9e3d4bcdc4b9f3
+index 0000000000000000000000000000000000000000..e923d689c1c29778375db944b25f69e7c9b9a8ee
 --- /dev/null
 +++ b/sepolicy/genfs_contexts
-@@ -0,0 +1,46 @@
+@@ -0,0 +1,50 @@
 +# HiSilicon GPU memory accounting
 +genfscon proc /gpu_memory u:object_r:mozart_proc_gpu_memory:s0
 +genfscon debugfs /ion u:object_r:mozart_debugfs_ion:s0
@@ -1406,22 +1400,69 @@ index 0000000000000000000000000000000000000000..2d958893137df17ac8f47f760d9e3d4b
 +genfscon sysfs /class/rfkill/rfkill0 u:object_r:sysfs_bluetooth_writable:s0
 +genfscon sysfs /devices/bluetooth_power.35/rfkill/rfkill0 u:object_r:sysfs_bluetooth_writable:s0
 +genfscon sysfs /module/bcmdhd/parameters/firmware_path u:object_r:sysfs_wlan_fwpath:s0
++genfscon sysfs /firmware/devicetree/base/gps_power u:object_r:mozart_sysfs_gps:s0
 +genfscon sysfs /devices/platform/huawei_sensor u:object_r:mozart_sysfs_sensors:s0
 +genfscon sysfs /class/sensors u:object_r:mozart_sysfs_sensors:s0
++
++# Charger controls
++genfscon sysfs /devices/huawei_charger.40 u:object_r:sysfs_power:s0
 +
 +# Audio board information
 +genfscon sysfs /firmware/devicetree/base/hisi,boardname u:object_r:mozart_sysfs_boardinfo:s0
 +genfscon sysfs /firmware/devicetree/base/audio_hw_config u:object_r:mozart_sysfs_audio_info:s0
+diff --git a/sepolicy/gpsd.te b/sepolicy/gpsd.te
+index 9aeb178b8d6ab8dd5ce98662c1d29f3d8eb2b45c..604972f0bb5d546d7a5e2235872b3b0f81ac646e 100644
+--- a/sepolicy/gpsd.te
++++ b/sepolicy/gpsd.te
+@@ -1,6 +1,13 @@
+ # gpsd_4752 daemon
+ type gpsd, domain;
+-type gpsd_exec, exec_type, file_type;
++type gpsd_exec, exec_type, file_type, system_file_type;
+ 
+ # Started by init
+ init_daemon_domain(gpsd)
++
++allow domain gpsd_exec:file { getattr read };
++
++allow gpsd self:netlink_kobject_uevent_socket create_socket_perms_no_ioctl;
++allow gpsd mozart_gps_data_file:dir rw_dir_perms;
++allow gpsd mozart_gps_data_file:file create_file_perms;
++allow gpsd mozart_gps_data_file:fifo_file create_file_perms;
+diff --git a/sepolicy/gpsdaemon.te b/sepolicy/gpsdaemon.te
+index a07702d8584f731b2e111ad53933c241242de326..9d78331f7c2e24f5e2e6bc55ea4cd85c10d02fa5 100644
+--- a/sepolicy/gpsdaemon.te
++++ b/sepolicy/gpsdaemon.te
+@@ -1,6 +1,17 @@
+ # gpsdaemon daemon
+ type gpsdaemon, domain;
+-type gpsdaemon_exec, exec_type, file_type;
++type gpsdaemon_exec, exec_type, file_type, system_file_type;
+ 
+ # Started by init
+ init_daemon_domain(gpsdaemon)
++
++allow gpsdaemon mozart_gps_data_file:dir rw_dir_perms;
++allow gpsdaemon mozart_gps_data_file:file create_file_perms;
++allow gpsdaemon mozart_gps_data_file:fifo_file create_file_perms;
++allow gpsdaemon shell_exec:file rx_file_perms;
++allow gpsdaemon { toolbox_exec vendor_toolbox_exec }:file rx_file_perms;
++allow gpsdaemon mozart_sysfs_gps:dir search;
++allow gpsdaemon mozart_sysfs_gps:file r_file_perms;
++
++type mozart_ctl_gpsd_prop, property_type;
++set_prop(gpsdaemon, mozart_ctl_gpsd_prop)
 diff --git a/sepolicy/init.te b/sepolicy/init.te
 new file mode 100644
-index 0000000000000000000000000000000000000000..f43ecd7b361ad9d06680f00eebcc4d839f6f5e15
+index 0000000000000000000000000000000000000000..4a01bac884c1663955fce7d0974082e39bc7c036
 --- /dev/null
 +++ b/sepolicy/init.te
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,27 @@
 +# Legacy root symlink is created after the rootfs is tmpfs-backed on this device.
 +allow init tmpfs:lnk_file create;
 +
 +allow init mozart_tee_socket:sock_file create_file_perms;
++allow init mozart_gps_socket:sock_file create_file_perms;
 +
 +allow init proc_filesystems:file getattr;
 +allow init mozart_hisitest_block_device:blk_file setattr;
@@ -1436,9 +1477,11 @@ index 0000000000000000000000000000000000000000..f43ecd7b361ad9d06680f00eebcc4d83
 +allow init mozart_sysfs_fb:file { rw_file_perms setattr };
 +allow init mozart_sysfs_hmp:file { rw_file_perms setattr };
 +allow init mozart_sysfs_ksm:file w_file_perms;
-+allow init mozart_sysfs_mmc_queue:file rw_file_perms;
++allow init mozart_sysfs_mmc_queue:file { rw_file_perms setattr };
 +allow init mozart_sysfs_perfhub:file { rw_file_perms setattr };
 +allow init mozart_sysfs_sensors:file { rw_file_perms setattr };
++allow init proc_bluetooth_writable:file setattr;
++allow init { proc_uid_cputime_removeuid proc_uid_cputime_showstat }:file setattr;
 +allow init sysfs_devices_system_cpu:file w_file_perms;
 +allow init sysfs_bluetooth_writable:file { rw_file_perms setattr };
 +allow init sysfs_wlan_fwpath:file { rw_file_perms setattr };
@@ -1455,6 +1498,58 @@ index 0000000000000000000000000000000000000000..cb88b563939cc2d0feab0ce2a2035a9a
 +allow kernel mozart_hwlog_device:chr_file { open write };
 +allow kernel mozart_sysfs_devfreq:file rw_file_perms;
 +allow kernel sysfs_devices_system_cpu:file w_file_perms;
+diff --git a/sepolicy/mac_addr_normalization.te b/sepolicy/mac_addr_normalization.te
+index e800118298a0ecd5fad7b316441945613403138d..53a119a135d8d4cf93028e8a53ec845a07039c5f 100644
+--- a/sepolicy/mac_addr_normalization.te
++++ b/sepolicy/mac_addr_normalization.te
+@@ -1,6 +1,22 @@
+ # mac_addr_normalization daemon
+ type mac_addr_normalization, domain;
+-type mac_addr_normalization_exec, exec_type, file_type, vendor_file_type;
++type mac_addr_normalization_exec, exec_type, file_type, system_file_type, vendor_file_type;
++type mac_addr_normalization_vendor_exec, exec_type, file_type, system_file_type, vendor_file_type;
+ 
+ # Started by init
+ init_daemon_domain(mac_addr_normalization)
++
++# Preserve Huawei's NVM lookup before using the persistent local fallback.
++allow mac_addr_normalization mac_addr_normalization_vendor_exec:file rx_file_perms;
++allow mac_addr_normalization mozart_oeminfo_device_dir:dir rw_dir_perms;
++allow mac_addr_normalization mozart_oeminfo_device_dir:sock_file create_file_perms;
++allow mac_addr_normalization mozart_oeminfo_socket:sock_file write;
++allow mac_addr_normalization oeminfo_nvm:unix_dgram_socket sendto;
++get_prop(mac_addr_normalization, exported_bluetooth_prop)
++
++# Some mozart variants ship without MACBT/MACWLAN NVM records.
++allow mac_addr_normalization self:capability chown;
++allow mac_addr_normalization bluetooth_data_file:dir rw_dir_perms;
++allow mac_addr_normalization bluetooth_data_file:file create_file_perms;
++allow mac_addr_normalization wifi_data_file:dir rw_dir_perms;
++allow mac_addr_normalization wifi_data_file:file create_file_perms;
+diff --git a/sepolicy/oeminfo_nvm.te b/sepolicy/oeminfo_nvm.te
+index 069711126c093471918e0f1a709dbccd2ae5917b..fd15c04cfc09894e2c46fac5c20eaf46ced75832 100644
+--- a/sepolicy/oeminfo_nvm.te
++++ b/sepolicy/oeminfo_nvm.te
+@@ -4,3 +4,19 @@ type oeminfo_nvm_exec, exec_type, file_type;
+ 
+ # Started by init
+ init_daemon_domain(oeminfo_nvm)
++
++# /sbin lives on rootfs during early boot; oeminfo_nvm starts before these
++# ramdisk files can be relabeled to their *_exec context.
++allow oeminfo_nvm rootfs:file { getattr open read execute map entrypoint };
++
++allow oeminfo_nvm properties_device:dir r_dir_perms;
++
++# oeminfo_nvm creates its own /dev/socket/oeminfo_nvm endpoint instead of
++# declaring an init-managed socket.
++allow oeminfo_nvm device:dir { getattr search write add_name };
++allow oeminfo_nvm mozart_oeminfo_device_dir:dir create_dir_perms;
++allow oeminfo_nvm socket_device:dir rw_dir_perms;
++allow oeminfo_nvm mozart_oeminfo_socket:sock_file create_file_perms;
++allow oeminfo_nvm self:capability { chown fsetid };
++type_transition oeminfo_nvm device:dir mozart_oeminfo_device_dir "oinv";
++type_transition oeminfo_nvm socket_device:sock_file mozart_oeminfo_socket "oeminfo_nvm";
 diff --git a/sepolicy/oeminfo_nvm_server.te b/sepolicy/oeminfo_nvm_server.te
 new file mode 100644
 index 0000000000000000000000000000000000000000..792ee4176deb28f56aa61fd4c87fd3b9882b5774
@@ -1462,12 +1557,19 @@ index 0000000000000000000000000000000000000000..792ee4176deb28f56aa61fd4c87fd3b9
 +++ b/sepolicy/oeminfo_nvm_server.te
 @@ -0,0 +1 @@
 +allow oeminfo_nvm mozart_nve_device:chr_file rw_file_perms;
+diff --git a/sepolicy/property_contexts b/sepolicy/property_contexts
+new file mode 100644
+index 0000000000000000000000000000000000000000..741a59540b46aa2002a3af488ef7e22e8cedbd77
+--- /dev/null
++++ b/sepolicy/property_contexts
+@@ -0,0 +1 @@
++ctl.start$gpsd_4752 u:object_r:mozart_ctl_gpsd_prop:s0 exact string
 diff --git a/sepolicy/public/file.te b/sepolicy/public/file.te
 new file mode 100644
-index 0000000000000000000000000000000000000000..9411dd031bffda9ad7a1f9b94aea44c79a7eb718
+index 0000000000000000000000000000000000000000..9164aebe4d8fc4bbb5144c3ca0eeb3a8a10d4a44
 --- /dev/null
 +++ b/sepolicy/public/file.te
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,33 @@
 +# Device nodes
 +type mozart_fsck_block_device, dev_type;
 +type mozart_hwlog_device, dev_type;
@@ -1484,6 +1586,7 @@ index 0000000000000000000000000000000000000000..9411dd031bffda9ad7a1f9b94aea44c7
 +
 +# Service sockets
 +type mozart_oeminfo_socket, file_type;
++type mozart_gps_socket, file_type;
 +type mozart_tee_socket, file_type;
 +
 +# Kernel interfaces
@@ -1494,11 +1597,20 @@ index 0000000000000000000000000000000000000000..9411dd031bffda9ad7a1f9b94aea44c7
 +type mozart_sysfs_block2mtd, fs_type, sysfs_type;
 +type mozart_sysfs_devfreq, fs_type, sysfs_type;
 +type mozart_sysfs_fb, fs_type, sysfs_type;
++type mozart_sysfs_gps, fs_type, sysfs_type;
 +type mozart_sysfs_hmp, fs_type, sysfs_type;
 +type mozart_sysfs_ksm, fs_type, sysfs_type;
 +type mozart_sysfs_mmc_queue, fs_type, sysfs_type;
 +type mozart_sysfs_perfhub, fs_type, sysfs_type;
 +type mozart_sysfs_sensors, fs_type, sysfs_type;
+diff --git a/sepolicy/vendor/hal_light_default.te b/sepolicy/vendor/hal_light_default.te
+new file mode 100644
+index 0000000000000000000000000000000000000000..6490ad9a6d598239bce017ece439f59b135a9e8e
+--- /dev/null
++++ b/sepolicy/vendor/hal_light_default.te
+@@ -0,0 +1,2 @@
++allow hal_light_default graphics_device:dir search;
++allow hal_light_default graphics_device:chr_file rw_file_perms;
 diff --git a/sepolicy/surfaceflinger.te b/sepolicy/surfaceflinger.te
 new file mode 100644
 index 0000000000000000000000000000000000000000..f53f2b4614b5488fb33bf78c07063b239f286c91
@@ -1508,13 +1620,14 @@ index 0000000000000000000000000000000000000000..f53f2b4614b5488fb33bf78c07063b23
 +hal_server_domain(surfaceflinger, hal_graphics_allocator)
 diff --git a/sepolicy/system_server.te b/sepolicy/system_server.te
 new file mode 100644
-index 0000000000000000000000000000000000000000..285f941d552d6ab29ea1ad61366674058d9e73ff
+index 0000000000000000000000000000000000000000..0e59adca0251e14694e6aa446b0ac8ff7f9ade69
 --- /dev/null
 +++ b/sepolicy/system_server.te
-@@ -0,0 +1,4 @@
+@@ -0,0 +1,5 @@
 +allow system_server sensors_device:chr_file rw_file_perms;
-+allow system_server mozart_gps_data_file:dir search;
-+allow system_server mozart_gps_data_file:fifo_file rw_file_perms;
++allow system_server mozart_gps_data_file:dir rw_dir_perms;
++allow system_server mozart_gps_data_file:fifo_file create_file_perms;
++unix_socket_connect(system_server, mozart_gps, gpsd)
 +allow system_server mozart_sensors_data_file:file { rw_file_perms setattr };
 diff --git a/sepolicy/tee.te b/sepolicy/tee.te
 new file mode 100644
@@ -1581,6 +1694,19 @@ index 0000000000000000000000000000000000000000..b5faac53f25c0723ca70ff60251e1612
 +# The legacy 3.10 kernel exposes mount namespace inodes through procfs.
 +# Limit the compatibility exception to opening and receiving namespace fds.
 +allow zygote proc:file { open read };
+diff --git a/tools/audio_legacy_symbols.map b/tools/audio_legacy_symbols.map
+new file mode 100644
+index 0000000000000000000000000000000000000000..835aee217de6c12e077e9f7b7f17deb76973da02
+--- /dev/null
++++ b/tools/audio_legacy_symbols.map
+@@ -0,0 +1,7 @@
++UCNV_FROM_U_CALLBACK_STOP_60 UCNV_FROM_U_CALLBACK_STOP_66
++UCNV_TO_U_CALLBACK_STOP_60 UCNV_TO_U_CALLBACK_STOP_66
++ucnv_close_60 ucnv_close_66
++ucnv_convertEx_60 ucnv_convertEx_66
++ucnv_open_60 ucnv_open_66
++ucnv_setFromUCallBack_60 ucnv_setFromUCallBack_66
++ucnv_setToUCallBack_60 ucnv_setToUCallBack_66
 diff --git a/tools/gps_legacy_symbols.map b/tools/gps_legacy_symbols.map
 new file mode 100644
 index 0000000000000000000000000000000000000000..1e828ec009995218f7e4d1beb88ebe0a34f9e35f
@@ -1595,3 +1721,150 @@ index 0000000000000000000000000000000000000000..1e828ec009995218f7e4d1beb88ebe0a
 +ucnv_open_60 ucnv_open_66
 +ucnv_setFromUCallBack_60 ucnv_setFromUCallBack_66
 +ucnv_setToUCallBack_60 ucnv_setToUCallBack_66
+diff --git a/tools/patch_legacy_icu_symbols.sh b/tools/patch_legacy_icu_symbols.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..c05470f50037fd04967a6d881a0efe3f5a226e6d
+--- /dev/null
++++ b/tools/patch_legacy_icu_symbols.sh
+@@ -0,0 +1,60 @@
++#!/bin/bash
++
++set -euo pipefail
++
++script_dir="$(cd "$(dirname "$0")" && pwd)"
++symbol_map="${SYMBOL_MAP:-${script_dir}/audio_legacy_symbols.map}"
++
++if [ "$#" -eq 0 ]; then
++    echo "usage: $0 ELF_FILE..." >&2
++    exit 2
++fi
++
++if [ ! -f "${symbol_map}" ]; then
++    echo "symbol map not found: ${symbol_map}" >&2
++    exit 2
++fi
++
++for elf_file in "$@"; do
++    if [ ! -f "${elf_file}" ]; then
++        echo "ELF file not found: ${elf_file}" >&2
++        exit 2
++    fi
++
++    original_size="$(stat -c %s "${elf_file}")"
++
++    while read -r old_symbol new_symbol; do
++        [ -n "${old_symbol}" ] || continue
++
++        old_count="$(LC_ALL=C grep -aFo "${old_symbol}" "${elf_file}" 2>/dev/null | wc -l || true)"
++        new_count="$(LC_ALL=C grep -aFo "${new_symbol}" "${elf_file}" 2>/dev/null | wc -l || true)"
++
++        if [ "${old_count}" -eq 0 ]; then
++            if [ "${new_count}" -eq 0 ]; then
++                echo "neither symbol exists in ${elf_file}: ${old_symbol}" >&2
++                exit 1
++            fi
++            continue
++        fi
++
++        if [ "${#old_symbol}" -ne "${#new_symbol}" ]; then
++            echo "replacement changes string length: ${old_symbol} -> ${new_symbol}" >&2
++            exit 1
++        fi
++
++        OLD_SYMBOL="${old_symbol}" NEW_SYMBOL="${new_symbol}" \
++            perl -0pi -e 's/\Q$ENV{OLD_SYMBOL}\E/$ENV{NEW_SYMBOL}/g' "${elf_file}"
++    done < "${symbol_map}"
++
++    if [ "$(stat -c %s "${elf_file}")" -ne "${original_size}" ]; then
++        echo "ELF size changed unexpectedly: ${elf_file}" >&2
++        exit 1
++    fi
++
++    if readelf -Ws "${elf_file}" 2>/dev/null | awk '$7 == "UND" { print $8 }' | grep -q '_60$'; then
++        echo "legacy ICU symbols remain unresolved in ${elf_file}" >&2
++        exit 1
++    fi
++
++    echo "patched and verified: ${elf_file}"
++done
+diff --git a/vendorsetup.sh b/vendorsetup.sh
+index 9cda2f1ff6be0e3ad4e2113e2792021d1ead4fcb..88d5a1711002e5c766c385e119f9b4caefabd193 100644
+--- a/vendorsetup.sh
++++ b/vendorsetup.sh
+@@ -3,5 +3,3 @@
+ #
+ # SPDX-License-Identifier: Apache-2.0
+ #
+-
+-add_lunch_combo lineage_mozart-userdebug
+diff --git a/vintf/manifest.xml b/vintf/manifest.xml
+index 7746722730a802b85fb2439745ee8fc5a7b949aa..d0d058a52f31ff9a0d12f7ff5cc7d4989f6f4a16 100644
+--- a/vintf/manifest.xml
++++ b/vintf/manifest.xml
+@@ -26,15 +26,6 @@
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.cas</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IMediaCasService</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>android.hardware.configstore</name>
+         <transport>hwbinder</transport>
+@@ -173,15 +164,6 @@
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.usb</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IUsb</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>android.hardware.vibrator</name>
+         <transport>hwbinder</transport>
+@@ -191,34 +173,4 @@
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.wifi</name>
+-        <transport>hwbinder</transport>
+-        <version>1.2</version>
+-        <interface>
+-            <name>IWifi</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.wifi.hostapd</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IHostapd</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.wifi.supplicant</name>
+-        <transport>hwbinder</transport>
+-        <version>1.1</version>
+-        <interface>
+-            <name>ISupplicant</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-    <sepolicy>
+-        <version>27.0</version>
+-    </sepolicy>
+ </manifest>

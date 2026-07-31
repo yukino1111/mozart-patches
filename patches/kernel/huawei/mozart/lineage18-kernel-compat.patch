@@ -72,6 +72,48 @@ index 13443a10e320b6c893256dc44910b60cbf4fb3ad..38de64949712ddb126ae3bb14f677983
  };
  
  static const struct user_regset_view user_aarch64_view = {
+diff --git a/drivers/staging/android/ion/ion_cma_heap.c b/drivers/staging/android/ion/ion_cma_heap.c
+index 346df57baf029803b918ac70f9baa91fd01bac5f..fc056433317164a08f7950b1e8b8930d87fc3d2e 100644
+--- a/drivers/staging/android/ion/ion_cma_heap.c
++++ b/drivers/staging/android/ion/ion_cma_heap.c
+@@ -207,8 +207,11 @@ struct ion_heap *ion_cma_heap_create(struct ion_platform_heap *data)
+ 	cma_heap->heap.ops = &ion_cma_ops;
+ 	/* get device from private heaps data, later it will be
+ 	 * used to make the link with reserved CMA memory */
+-	//cma_heap->dev = data->priv;
+-	cma_heap->dev = NULL;
++	if (!data->priv) {
++		kfree(cma_heap);
++		return ERR_PTR(-EINVAL);
++	}
++	cma_heap->dev = data->priv;
+ 	cma_heap->heap.type = ION_HEAP_TYPE_DMA;
+ 	return &cma_heap->heap;
+ }
+diff --git a/fs/proc/fd.c b/fs/proc/fd.c
+index d7a4a28ef63024c66ef862594701d1e389e77a47..029814fb47cc5a59735b6ad3b848ce300c58a2bc 100644
+--- a/fs/proc/fd.c
++++ b/fs/proc/fd.c
+@@ -302,11 +302,17 @@ static struct dentry *proc_lookupfd(struct inode *dir, struct dentry *dentry,
+  */
+ int proc_fd_permission(struct inode *inode, int mask)
+ {
++	struct task_struct *p;
+ 	int rv = generic_permission(inode, mask);
+ 	if (rv == 0)
+ 		return 0;
+-	if (task_pid(current) == proc_pid(inode))
++
++	rcu_read_lock();
++	p = pid_task(proc_pid(inode), PIDTYPE_PID);
++	if (p && same_thread_group(p, current))
+ 		rv = 0;
++	rcu_read_unlock();
++
+ 	return rv;
+ }
+ 
+
 diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
 index ef6103bf1f9bb3ade18268a639cc784dcc695b95..80c61675815f7d45ab6108c0e873fae4131a943b 100644
 --- a/include/uapi/linux/elf.h

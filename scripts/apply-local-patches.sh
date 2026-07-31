@@ -37,12 +37,20 @@ apply_once \
     "$PATCH_ROOT/patches/device/huawei/mozart/lineage18-mozart-device.patch"
 
 apply_once \
+    "device/huawei/mozart" \
+    "$PATCH_ROOT/patches/device/huawei/mozart/android11-emulated-primary-storage.patch"
+
+apply_once \
     "frameworks/av" \
     "$PATCH_ROOT/patches/frameworks/av/legacy-audio-version-table.patch"
 
 apply_once \
     "frameworks/base" \
     "$PATCH_ROOT/patches/frameworks/base/legacy-mali-egl-main-thread.patch"
+
+apply_once \
+    "frameworks/base" \
+    "$PATCH_ROOT/patches/frameworks/base/legacy-install-media-gnss-stability.patch"
 
 apply_once \
     "frameworks/native" \
@@ -57,12 +65,28 @@ apply_once \
     "$PATCH_ROOT/patches/hardware/interfaces/legacy-composer-wifi.patch"
 
 apply_once \
+    "hardware/lineage/interfaces" \
+    "$PATCH_ROOT/patches/hardware/lineage/interfaces/legacy-gnss-nmea-copy.patch"
+
+apply_once \
     "hardware/libhardware" \
     "$PATCH_ROOT/patches/hardware/libhardware/legacy-mozart-gralloc-path.patch"
 
 apply_once \
     "kernel/huawei/mozart" \
     "$PATCH_ROOT/patches/kernel/huawei/mozart/lineage18-kernel-compat.patch"
+
+apply_once \
+    "packages/apps/Bluetooth" \
+    "$PATCH_ROOT/patches/packages/apps/Bluetooth/legacy-huawei-disable-scs.patch"
+
+apply_once \
+    "packages/modules/NetworkStack" \
+    "$PATCH_ROOT/patches/packages/modules/NetworkStack/legacy-kernel-tcp-info.patch"
+
+apply_once \
+    "system/bt" \
+    "$PATCH_ROOT/patches/system/bt/legacy-huawei-disable-scs.patch"
 
 apply_once \
     "system/core" \
