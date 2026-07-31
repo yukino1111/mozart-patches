@@ -1,0 +1,90 @@
+diff --git a/graphics/composer/2.1/default/Android.bp b/graphics/composer/2.1/default/Android.bp
+index a367457ae94a977ef02459a50a5514ee3d90f1fb..f16f458aba80f383dac06259d8ff04c4fd77d008 100644
+--- a/graphics/composer/2.1/default/Android.bp
++++ b/graphics/composer/2.1/default/Android.bp
+@@ -1,3 +1,32 @@
++cc_library_shared {
++    name: "android.hardware.graphics.composer@2.1-impl",
++    defaults: ["hidl_defaults"],
++    vendor: true,
++    relative_install_path: "hw",
++    srcs: ["passthrough.cpp"],
++    header_libs: [
++        "android.hardware.graphics.composer@2.1-passthrough",
++    ],
++    shared_libs: [
++        "android.hardware.graphics.composer@2.1",
++        "android.hardware.graphics.composer@2.1-resources",
++        "libbase",
++        "libbinder",
++        "libcutils",
++        "libfmq",
++        "libhardware",
++        "libhidlbase",
++        "libhwc2on1adapter",
++        "libhwc2onfbadapter",
++        "liblog",
++        "libsync",
++        "libutils",
++    ],
++    cflags: [
++        "-DLOG_TAG=\"ComposerHal\"",
++    ],
++}
++
+ cc_binary {
+     name: "android.hardware.graphics.composer@2.1-service",
+     defaults: ["hidl_defaults"],
+diff --git a/wifi/1.4/default/wifi_legacy_hal.cpp b/wifi/1.4/default/wifi_legacy_hal.cpp
+index 75f22ec3ea3b17241cd4a67287e95ec156d3c7d5..19ea0ee284d30cb4167263bee03f853e111b4572 100644
+--- a/wifi/1.4/default/wifi_legacy_hal.cpp
++++ b/wifi/1.4/default/wifi_legacy_hal.cpp
+@@ -1359,8 +1359,17 @@ wifi_error WifiLegacyHal::retrieveIfaceHandles() {
+         LOG(ERROR) << "Failed to enumerate interface handles";
+         return status;
+     }
++    if (num_iface_handles < 0 ||
++        (num_iface_handles > 0 && iface_handles == nullptr)) {
++        LOG(ERROR) << "Legacy HAL returned an invalid interface handle list";
++        return WIFI_ERROR_NOT_AVAILABLE;
++    }
+     iface_name_to_handle_.clear();
+     for (int i = 0; i < num_iface_handles; ++i) {
++        if (iface_handles[i] == nullptr) {
++            LOG(WARNING) << "Legacy HAL returned a null interface handle";
++            continue;
++        }
+         std::array<char, IFNAMSIZ> iface_name_arr = {};
+         status = global_func_table_.wifi_get_iface_name(
+             iface_handles[i], iface_name_arr.data(), iface_name_arr.size());
+diff --git a/graphics/composer/2.1/default/passthrough.cpp b/graphics/composer/2.1/default/passthrough.cpp
+new file mode 100755
+index 0000000000000000000000000000000000000000..ef7ed7c87a5b2b642b7dca62c5c50610f5bd38ce
+--- /dev/null
++++ b/graphics/composer/2.1/default/passthrough.cpp
+@@ -0,0 +1,25 @@
++/*
++ * Copyright 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include <android/hardware/graphics/composer/2.1/IComposer.h>
++#include <composer-passthrough/2.1/HwcLoader.h>
++
++using android::hardware::graphics::composer::V2_1::IComposer;
++using android::hardware::graphics::composer::V2_1::passthrough::HwcLoader;
++
++extern "C" IComposer* HIDL_FETCH_IComposer(const char* /* name */) {
++    return HwcLoader::load();
++}

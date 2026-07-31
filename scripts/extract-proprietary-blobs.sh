@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PATCH_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ANDROID_TOP="${1:-/android/lineage16-mozart}"
+ANDROID_TOP="${1:-/android/lineage18.1-mozart}"
 SOURCE_ROOT="${2:-$PATCH_ROOT/proprietary-blobs/huawei/mozart}"
 LIST_FILE="$PATCH_ROOT/proprietary-files/mozart-emui31-graphics.txt"
 CACHE_ROOT="$PATCH_ROOT/proprietary-blobs/huawei/mozart"
@@ -94,3 +94,4 @@ while IFS= read -r raw_line || [[ -n "$raw_line" ]]; do
 done < "$LIST_FILE"
 
 echo "copied $copied proprietary blobs"
+"$PATCH_ROOT/scripts/prepare-proprietary-blobs.sh" "$ANDROID_TOP"

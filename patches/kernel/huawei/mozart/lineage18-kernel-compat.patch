@@ -1,5 +1,18 @@
+diff --git a/arch/arm64/configs/lineage_mozart_defconfig b/arch/arm64/configs/lineage_mozart_defconfig
+index 468325fd043cfc044106fbf9e3b4f2853f118107..82ab3dc616c6ab3caacad934b7e06bb6d627128b 100755
+--- a/arch/arm64/configs/lineage_mozart_defconfig
++++ b/arch/arm64/configs/lineage_mozart_defconfig
+@@ -180,7 +180,7 @@ CONFIG_MAGIC_SYSRQ=y
+ CONFIG_DEBUG_FS=y
+ CONFIG_DEBUG_KERNEL=y
+ # CONFIG_SCHED_DEBUG is not set
+-CONFIG_DEBUG_INFO=y
++# CONFIG_DEBUG_INFO is not set
+ CONFIG_ATOMIC64_SELFTEST=y
+ CONFIG_PRINTK_TIME=y
+ CONFIG_HISI_TIME=y
 diff --git a/arch/arm64/kernel/ptrace.c b/arch/arm64/kernel/ptrace.c
-index 13443a10..38de6494 100755
+index 13443a10e320b6c893256dc44910b60cbf4fb3ad..38de64949712ddb126ae3bb14f677983984d7d63 100755
 --- a/arch/arm64/kernel/ptrace.c
 +++ b/arch/arm64/kernel/ptrace.c
 @@ -552,6 +552,33 @@ static int tls_set(struct task_struct *target, const struct user_regset *regset,
@@ -60,7 +73,7 @@ index 13443a10..38de6494 100755
  
  static const struct user_regset_view user_aarch64_view = {
 diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
-index ef6103bf..80c61675 100644
+index ef6103bf1f9bb3ade18268a639cc784dcc695b95..80c61675815f7d45ab6108c0e873fae4131a943b 100644
 --- a/include/uapi/linux/elf.h
 +++ b/include/uapi/linux/elf.h
 @@ -395,6 +395,7 @@ typedef struct elf64_shdr {

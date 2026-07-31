@@ -1,0 +1,250 @@
+diff --git a/libs/ui/Region.cpp b/libs/ui/Region.cpp
+index e01309b6797df3a85ae9694127baa7077bd8820e..f1080530d10934f3d608b9101b28e45b4c84a138 100644
+--- a/libs/ui/Region.cpp
++++ b/libs/ui/Region.cpp
+@@ -70,10 +70,8 @@ Region::Region() {
+     mStorage.push_back(Rect(0, 0));
+ }
+ 
+-Region::Region(const Region& rhs)
++Region::Region(const Region& rhs) : mStorage(rhs.mStorage)
+ {
+-    mStorage.clear();
+-    mStorage.insert(mStorage.begin(), rhs.mStorage.begin(), rhs.mStorage.end());
+ #if defined(VALIDATE_REGIONS)
+     validate(rhs, "rhs copy-ctor");
+ #endif
+@@ -101,7 +99,7 @@ Region::~Region()
+  * final, correctly ordered region buffer. Each rectangle will be compared with the span directly
+  * above it, and subdivided to resolve any remaining T-junctions.
+  */
+-static void reverseRectsResolvingJunctions(const Rect* begin, const Rect* end, FatVector<Rect>& dst,
++static void reverseRectsResolvingJunctions(const Rect* begin, const Rect* end, Vector<Rect>& dst,
+                                            int spanDirection) {
+     dst.clear();
+ 
+@@ -202,11 +200,11 @@ Region Region::createTJunctionFreeRegion(const Region& r) {
+     if (r.isEmpty()) return r;
+     if (r.isRect()) return r;
+ 
+-    FatVector<Rect> reversed;
++    Vector<Rect> reversed;
+     reverseRectsResolvingJunctions(r.begin(), r.end(), reversed, direction_RTL);
+ 
+     Region outputRegion;
+-    reverseRectsResolvingJunctions(reversed.data(), reversed.data() + reversed.size(),
++    reverseRectsResolvingJunctions(reversed.array(), reversed.array() + reversed.size(),
+                                    outputRegion.mStorage, direction_LTR);
+     outputRegion.mStorage.push_back(
+             r.getBounds()); // to make region valid, mStorage must end with bounds
+@@ -229,8 +227,7 @@ Region& Region::operator = (const Region& rhs)
+         return *this;
+     }
+ 
+-    mStorage.clear();
+-    mStorage.insert(mStorage.begin(), rhs.mStorage.begin(), rhs.mStorage.end());
++    mStorage = rhs.mStorage;
+     return *this;
+ }
+ 
+@@ -307,7 +304,7 @@ bool Region::hasSameRects(const Region& other) const {
+ void Region::addRectUnchecked(int l, int t, int r, int b)
+ {
+     Rect rect(l,t,r,b);
+-    mStorage.insert(mStorage.end() - 1, rect);
++    mStorage.insertAt(rect, mStorage.size() - 1);
+ }
+ 
+ // ----------------------------------------------------------------------------
+@@ -365,7 +362,7 @@ Region& Region::translateSelf(int x, int y) {
+ 
+ Region& Region::scaleSelf(float sx, float sy) {
+     size_t count = mStorage.size();
+-    Rect* rects = mStorage.data();
++    Rect* rects = mStorage.editArray();
+     while (count) {
+         rects->left = static_cast<int32_t>(static_cast<float>(rects->left) * sx + 0.5f);
+         rects->right = static_cast<int32_t>(static_cast<float>(rects->right) * sx + 0.5f);
+@@ -470,10 +467,10 @@ const Region Region::operation(const Region& rhs, int dx, int dy, uint32_t op) c
+ class Region::rasterizer : public region_operator<Rect>::region_rasterizer
+ {
+     Rect bounds;
+-    FatVector<Rect>& storage;
++    Vector<Rect>& storage;
+     Rect* head;
+     Rect* tail;
+-    FatVector<Rect> span;
++    Vector<Rect> span;
+     Rect* cur;
+ public:
+     explicit rasterizer(Region& reg)
+@@ -500,8 +497,8 @@ Region::rasterizer::~rasterizer()
+         flushSpan();
+     }
+     if (storage.size()) {
+-        bounds.top = storage.front().top;
+-        bounds.bottom = storage.back().bottom;
++        bounds.top = storage[0].top;
++        bounds.bottom = storage.top().bottom;
+         if (storage.size() == 1) {
+             storage.clear();
+         }
+@@ -525,14 +522,14 @@ void Region::rasterizer::operator()(const Rect& rect)
+         }
+     }
+     span.push_back(rect);
+-    cur = span.data() + (span.size() - 1);
++    cur = span.editArray() + (span.size() - 1);
+ }
+ 
+ void Region::rasterizer::flushSpan()
+ {
+     bool merge = false;
+     if (tail-head == ssize_t(span.size())) {
+-        Rect const* p = span.data();
++        Rect const* p = span.array();
+         Rect const* q = head;
+         if (p->top == q->bottom) {
+             merge = true;
+@@ -547,17 +544,17 @@ void Region::rasterizer::flushSpan()
+         }
+     }
+     if (merge) {
+-        const int bottom = span.front().bottom;
++        const int bottom = span[0].bottom;
+         Rect* r = head;
+         while (r != tail) {
+             r->bottom = bottom;
+             r++;
+         }
+     } else {
+-        bounds.left = min(span.front().left, bounds.left);
+-        bounds.right = max(span.back().right, bounds.right);
+-        storage.insert(storage.end(), span.begin(), span.end());
+-        tail = storage.data() + storage.size();
++        bounds.left = min(span[0].left, bounds.left);
++        bounds.right = max(span.top().right, bounds.right);
++        storage.appendArray(span.array(), span.size());
++        tail = storage.editArray() + storage.size();
+         head = tail - span.size();
+     }
+     span.clear();
+@@ -800,7 +797,7 @@ void Region::translate(Region& reg, int dx, int dy)
+         validate(reg, "translate (before)");
+ #endif
+         size_t count = reg.mStorage.size();
+-        Rect* rects = reg.mStorage.data();
++        Rect* rects = reg.mStorage.editArray();
+         while (count) {
+             rects->offsetBy(dx, dy);
+             rects++;
+@@ -880,25 +877,24 @@ status_t Region::unflatten(void const* buffer, size_t size) {
+         ALOGE("Region::unflatten() failed, invalid region");
+         return BAD_VALUE;
+     }
+-    mStorage.clear();
+-    mStorage.insert(mStorage.begin(), result.mStorage.begin(), result.mStorage.end());
++    mStorage = result.mStorage;
+     return NO_ERROR;
+ }
+ 
+ // ----------------------------------------------------------------------------
+ 
+ Region::const_iterator Region::begin() const {
+-    return mStorage.data();
++    return mStorage.array();
+ }
+ 
+ Region::const_iterator Region::end() const {
+     // Workaround for b/77643177
+     // mStorage should never be empty, but somehow it is and it's causing
+     // an abort in ubsan
+-    if (mStorage.empty()) return mStorage.data();
++    if (mStorage.empty()) return mStorage.array();
+ 
+     size_t numRects = isRect() ? 1 : mStorage.size() - 1;
+-    return mStorage.data() + numRects;
++    return mStorage.array() + numRects;
+ }
+ 
+ Rect const* Region::getArray(size_t* count) const {
+diff --git a/libs/ui/include/ui/Region.h b/libs/ui/include/ui/Region.h
+index 6bb7b8d21c2b6d12fe90228736476e61b832b75f..1d91a01ca246d97d7fa2f6d8eae74436b6a8fb3c 100644
+--- a/libs/ui/include/ui/Region.h
++++ b/libs/ui/include/ui/Region.h
+@@ -26,7 +26,7 @@
+ 
+ #include <android-base/macros.h>
+ 
+-#include "FatVector.h"
++#include <utils/Vector.h>
+ 
+ #include <string>
+ 
+@@ -180,7 +180,7 @@ private:
+     // with an extra Rect as the last element which is set to the
+     // bounds of the region. However, if the region is
+     // a simple Rect then mStorage contains only that rect.
+-    FatVector<Rect> mStorage;
++    Vector<Rect> mStorage;
+ };
+ 
+ 
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 878761b07702cf8e5d7832fb75bcb6b0449af46d..55d25ab55c49fdc72db90fae9ea5926b2281bf53 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -48,6 +48,7 @@
+ #include <dlfcn.h>
+ #include <dvr/vr_flinger.h>
+ #include <errno.h>
++#include <fcntl.h>
+ #include <gui/BufferQueue.h>
+ #include <gui/DebugEGLImageTracker.h>
+ #include <gui/GuiConfig.h>
+@@ -59,11 +60,13 @@
+ #include <gui/Surface.h>
+ #include <input/IInputFlinger.h>
+ #include <layerproto/LayerProtoParser.h>
++#include <linux/fb.h>
+ #include <log/log.h>
+ #include <private/android_filesystem_config.h>
+ #include <private/gui/SyncFeatures.h>
+ #include <renderengine/RenderEngine.h>
+ #include <statslog.h>
++#include <sys/ioctl.h>
+ #include <sys/types.h>
+ #include <ui/ColorSpace.h>
+ #include <ui/DebugUtils.h>
+@@ -80,6 +83,7 @@
+ #include <utils/Timers.h>
+ #include <utils/Trace.h>
+ #include <utils/misc.h>
++#include <unistd.h>
+ 
+ #include <algorithm>
+ #include <cinttypes>
+@@ -4285,6 +4289,23 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& display, hal:
+         return;
+     }
+ 
++    if (mode == hal::PowerMode::OFF || mode == hal::PowerMode::ON) {
++        const int fbBlankMode =
++                mode == hal::PowerMode::OFF ? FB_BLANK_POWERDOWN : FB_BLANK_UNBLANK;
++        const int fd = open("/dev/graphics/fb0", O_WRONLY);
++        if (fd < 0) {
++            ALOGE("Error opening LCD framebuffer: %d (%s)", errno, strerror(errno));
++        } else {
++            const int ret = ioctl(fd, FBIOBLANK, fbBlankMode);
++            close(fd);
++
++            if (ret < 0) {
++                ALOGE("Error setting LCD blank mode %d: %d (%s)", fbBlankMode, errno,
++                      strerror(errno));
++            }
++        }
++    }
++
+     display->setPowerMode(mode);
+ 
+     if (mInterceptor->isEnabled()) {

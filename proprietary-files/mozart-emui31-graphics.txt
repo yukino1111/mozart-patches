@@ -5,6 +5,10 @@
 #
 # These files are proprietary vendor binaries. Do not commit them to this
 # public patch repository.
+#
+# The private libion inputs already exist in kirin930-dev's vendor tree.
+# scripts/prepare-proprietary-blobs.sh creates renamed copies and adjusts ELF
+# metadata without embedding any binary delta in this repository.
 lib/hw/copybit.hi3635.so;sha1=497bd7a7af2a1f13db5fb05c047d0d1e544001d9
 lib/hw/gralloc.hi3635.so;sha1=532c572fa8ebb29878e0c7fd31e54e7d868efdd4
 lib64/hw/copybit.hi3635.so;sha1=2a918be4264ca08de186911d9b6c0f912f4c1919
