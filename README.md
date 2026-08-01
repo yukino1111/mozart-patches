@@ -1,8 +1,36 @@
-# mozart-patches
+# mozart-patches: LineageOS 16.0
 
-Patch set for Huawei MediaPad M2 8.0 (`mozart`).
+Maintained device source and upstream patch stack for Huawei MediaPad M2 8.0
+(`mozart`).
 
-This repository contains the patches used to build based on [kirin930-dev](https://github.com/kirin930-dev).
+This branch contains the final buildable `device/huawei/mozart` source directly.
+Kernel, vendor, AOSP and LineageOS changes remain reproducible patches based on
+exactly pinned [kirin930-dev](https://github.com/kirin930-dev) revisions.
+
+## Repository layout
+
+- `device/huawei/mozart/` is the maintained final device tree, not a diff;
+- `patches/upstream/kirin930/` preserves the public-project compatibility
+  patches inherited from the upstream device tree;
+- the other paths below `patches/` contain this branch's maintained changes to
+  upstream repositories;
+- `local_manifests/mozart.xml` pins device, vendor and kernel baselines to exact
+  commits.
+
+## Checkout
+
+Initialize a normal LineageOS 16.0 tree, copy `local_manifests/mozart.xml` into
+`.repo/local_manifests/`, sync, and run:
+
+```sh
+scripts/apply-local-patches.sh /android/lineage16-mozart
+```
+
+The script first installs this repository's complete device source and then
+applies the upstream patch stack idempotently. The unchanged Huawei
+`hw_healthd`, `oeminfo_nvm_server` and `teecd` executables are not duplicated
+here; their hashes are verified against the copies supplied by the pinned
+device baseline.
 
 ## Experimental DSS overlay
 
