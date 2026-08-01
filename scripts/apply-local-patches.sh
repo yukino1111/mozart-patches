@@ -59,6 +59,10 @@ apply_once \
     "$PATCH_ROOT/patches/hardware/interfaces/legacy-composer-wifi.patch"
 
 apply_once \
+    "hardware/interfaces" \
+    "$PATCH_ROOT/patches/hardware/interfaces/legacy-private-sensor-types.patch"
+
+apply_once \
     "hardware/lineage/interfaces" \
     "$PATCH_ROOT/patches/hardware/lineage/interfaces/legacy-gnss-nmea-copy.patch"
 

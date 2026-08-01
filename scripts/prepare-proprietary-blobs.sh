@@ -15,6 +15,10 @@ if ! command -v "$PATCHELF" >/dev/null 2>&1; then
     echo "error: patchelf is required to prepare the legacy blobs" >&2
     exit 3
 fi
+if ! command -v readelf >/dev/null 2>&1; then
+    echo "error: readelf is required to validate the prepared legacy blobs" >&2
+    exit 3
+fi
 
 replace_needed() {
     local binary="$1"
@@ -42,6 +46,25 @@ add_needed() {
     fi
 }
 
+validate_load_segments() {
+    local binary="$1"
+    local type offset vaddr align
+    local found=0
+
+    while read -r type offset vaddr align; do
+        found=1
+        if (( offset % align != vaddr % align )); then
+            echo "error: misaligned PT_LOAD in $binary: offset=$offset vaddr=$vaddr align=$align" >&2
+            exit 5
+        fi
+    done < <(readelf -lW "$binary" | awk '$1 == "LOAD" { print $1, $2, $3, $NF }')
+
+    if (( found == 0 )); then
+        echo "error: no PT_LOAD segments found in $binary" >&2
+        exit 5
+    fi
+}
+
 for libdir in lib lib64; do
     source_ion="$VENDOR_PROPRIETARY/$libdir/libion.so"
     mozart_ion="$VENDOR_PROPRIETARY/$libdir/libion_mozart.so"
@@ -60,6 +83,9 @@ for libdir in lib lib64; do
     "$PATCHELF" --set-soname libion_mozart.so "$mozart_ion"
     replace_needed "$gralloc" libion.so libion_mozart.so
     add_needed "$mali" libutilscallstack.so
+    validate_load_segments "$mozart_ion"
+    validate_load_segments "$gralloc"
+    validate_load_segments "$mali"
 done
 
 echo "prepared legacy mozart gralloc, Mali and private libion blobs"
