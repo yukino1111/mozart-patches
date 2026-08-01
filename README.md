@@ -1,30 +1,40 @@
-# mozart-patches
+# mozart-patches: LineageOS 18.1
 
-Patch set for Huawei MediaPad M2 8.0 (`mozart`).
+Maintained device source and upstream patch stack for running LineageOS 18.1
+on the Huawei MediaPad M2 8.0 (`mozart`, HiSilicon Kirin 930/hi3635).
 
-This repository contains the patches used to build based on [kirin930-dev](https://github.com/kirin930-dev).
+This branch contains the final buildable `device/huawei/mozart` source directly.
+It adapts pinned kirin930-dev vendor and kernel baselines to the LineageOS 18.1
+platform with patches and reproducible preparation scripts.
 
-## Experimental DSS overlay
+## Repository layout
 
-`patches/hardware/interfaces/hwc2onfbadapter-hisi-dss-overlay-fallback.patch`
-adds an opt-in DSS overlay path to AOSP `HWC2OnFbAdapter` for mozart video
-playback testing. It does not enable Huawei's proprietary
-`hwcomposer.hi3635.so`.
+- `device/huawei/mozart/` is the maintained final device tree, not a diff;
+- `patches/` contains changes to upstream AOSP, LineageOS, kernel and vendor
+  repositories;
+- `local_manifests/mozart.xml` pins the device, vendor and kernel baselines to
+  exact commits;
+- `scripts/install-device-tree.sh` installs the maintained device source over
+  the pinned device baseline while preserving three unchanged Huawei rootfs
+  prebuilts that are intentionally not committed here.
 
-The overlay path is disabled by default. Enable the conservative YUV-only path
-on a flashed build with:
+## Checkout
+
+Initialize a normal LineageOS 18.1 source tree, copy
+`local_manifests/mozart.xml` into `.repo/local_manifests/`, and sync. The local
+manifest uses exact kirin930-dev commits so the three external device-specific
+repositories cannot silently change underneath this branch.
+
+Apply this branch's patches with:
 
 ```sh
-adb shell setprop persist.debug.mozart.hwc_overlay 1
-adb reboot
+scripts/apply-local-patches.sh /android/lineage18.1-mozart
 ```
 
-RGB/RGBA app layers are intentionally not handled by this path. A temporary
-RGB experiment caused tearing during app scrolling, so the maintained patch stays YUV-only.
-
-If the DSS ioctl fails, SurfaceFlinger falls back to the existing fbdev/client
-composition path for that process. `dumpsys SurfaceFlinger` includes a
-`mozart_dss_overlay` line for quick status checks.
+The script installs this repository's complete device tree and then applies
+idempotent patches relative to the clean Git revisions selected by the
+manifest. Do not run the pinned device baseline's old `patches/install.sh`;
+its Android 9 patches only apply partially to the Android 11 platform.
 
 ## Acknowledgements
 
@@ -32,9 +42,8 @@ Thanks to [kirin930-dev](https://github.com/kirin930-dev) and Codex.
 
 ## License
 
-Unless otherwise noted, this repository's scripts, documentation, and local text
+Unless otherwise noted, this repository's scripts, documentation and local text
 patches are licensed under the Apache License 2.0. This license does not apply
 to third-party proprietary binaries, which are not included here.
 
-Kernel-related patches, if added later, should be marked separately and follow
-the upstream kernel license, `GPL-2.0-only`.
+Kernel patches follow `GPL-2.0-only`.

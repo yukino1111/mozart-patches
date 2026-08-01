@@ -9,6 +9,8 @@ if [[ ! -d "$ANDROID_TOP/.repo" ]]; then
     exit 2
 fi
 
+bash "$PATCH_ROOT/scripts/install-device-tree.sh" "$ANDROID_TOP"
+
 apply_once() {
     local repo="$1"
     local patch="$2"
@@ -31,14 +33,6 @@ apply_once() {
 apply_once \
     "build/make" \
     "$PATCH_ROOT/patches/build/make/lineage18-mozart-build-ota.patch"
-
-apply_once \
-    "device/huawei/mozart" \
-    "$PATCH_ROOT/patches/device/huawei/mozart/lineage18-mozart-device.patch"
-
-apply_once \
-    "device/huawei/mozart" \
-    "$PATCH_ROOT/patches/device/huawei/mozart/android11-emulated-primary-storage.patch"
 
 apply_once \
     "frameworks/av" \
@@ -77,6 +71,10 @@ apply_once \
     "$PATCH_ROOT/patches/kernel/huawei/mozart/lineage18-kernel-compat.patch"
 
 apply_once \
+    "kernel/huawei/mozart" \
+    "$PATCH_ROOT/patches/kernel/huawei/mozart/legacy-fde-aes-compat.patch"
+
+apply_once \
     "packages/apps/Bluetooth" \
     "$PATCH_ROOT/patches/packages/apps/Bluetooth/legacy-huawei-disable-scs.patch"
 
@@ -91,6 +89,18 @@ apply_once \
 apply_once \
     "system/core" \
     "$PATCH_ROOT/patches/system/core/legacy-first-stage-mount.patch"
+
+apply_once \
+    "system/core" \
+    "$PATCH_ROOT/patches/system/core/legacy-dm-uevent-compat.patch"
+
+apply_once \
+    "system/sepolicy" \
+    "$PATCH_ROOT/patches/system/sepolicy/legacy-fde-data-mirror-policy.patch"
+
+apply_once \
+    "system/vold" \
+    "$PATCH_ROOT/patches/system/vold/legacy-fde-data-mirror-unmount.patch"
 
 apply_once \
     "system/tools/mkbootimg" \
